@@ -1,0 +1,61 @@
+**Topology Summary**
+
+Single-stage MOS common-source amplifier with an NMOS pull-down gain device and a diode-connected PMOS active load. Use exact port nodes `Vin` and `Vout`. The output node `Vout` is the shared NMOS drain and PMOS gate/drain node.
+
+**Device/Function List**
+
+- `VDD` source: independent DC supply from `VDD` to `0`, value `5 V`.
+- `Vin` source: independent voltage source from `Vin` to `0`, with DC bias around `1.5 V` and AC magnitude `1`.
+- `M1` NMOS common-source transistor:
+  - drain = `Vout`
+  - gate = `Vin`
+  - source = `0`
+  - bulk = `0`
+  - function: input-controlled pull-down/gain device.
+- `M2` PMOS diode-connected active load:
+  - drain = `Vout`
+  - gate = `Vout`
+  - source = `VDD`
+  - bulk = `VDD`
+  - function: nonlinear load/current source-like pull-up with local diode feedback.
+- Optional load resistor from `Vout` to `0` only if needed, preferably omitted unless required; if used, choose `50k` within the allowed `10k` to `100k`.
+
+**Bias/Reference Strategy**
+
+Ground is node `0`. `VDD` is fixed at `5 V`. `Vin` must have an explicit DC gate bias, preferably `1.5 V`, so `M1` conducts with `VGS > Vth`. The expected DC operating point should settle with `0 < Vout < 5 V`, both MOSFETs on, and `M1` preferably in saturation with:
+
+```spice
+VDS >= VGS - Vth
+```
+
+For `M1`, this means `Vout >= Vin - 0.7 V`.
+
+**Signal Or Feedback Path**
+
+Small-signal input at `Vin` modulates NMOS drain current. Increased `Vin` increases `M1` current, pulling `Vout` lower, so voltage gain should be inverting.
+
+The PMOS gate-drain short at `Vout` creates local negative feedback in the load: as `Vout` moves, PMOS overdrive changes, producing a finite small-signal diode resistance from `Vout` to `VDD`. This load reduces gain compared with an ideal current-source load but stabilizes the DC operating point.
+
+**SPICE/Netlist Constraints**
+
+- Final filename must be `p15.cir`.
+- Preserve exact node names `Vin` and `Vout`.
+- Include `.op`.
+- Include `.ac dec 20 1 1e9`.
+- Do not use subcircuits.
+- Do not use placeholder model names.
+- Include explicit `.model` statements for NMOS and PMOS with:
+  - NMOS: `VTO=0.7`, `KP=100u`
+  - PMOS: `VTO=-0.7`, `KP=50u`
+- Use `W=50u L=1u` for `M1`.
+- Use `W=100u L=1u` for `M2`.
+
+**Failure Risks To Avoid**
+
+- Do not leave `Vin` floating or define it as AC-only without DC bias.
+- Do not swap PMOS source/drain such that the source is not at `VDD`.
+- Do not forget the PMOS diode connection: both gate and drain must be tied to `Vout`.
+- Do not tie NMOS bulk anywhere except `0`.
+- Do not tie PMOS bulk anywhere except `VDD`.
+- Avoid choosing too low a `Vin` DC bias; below about `1.2 V`, `M1` may be weak or off.
+- Avoid adding a strong resistive load that dominates the PMOS diode load and destroys the requested topology behavior.

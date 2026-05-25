@@ -1,0 +1,2 @@
+{"ts_utc": "21:28:19.225864+00:00", "type": "run.started", "payload": {"run_id": "p27_a00", "backend": "codex", "task_id": "27", "task_type": "Subtractor", "task_level": "Hard", "output_cir": "p27.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "21:29:05.863767+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 1}}

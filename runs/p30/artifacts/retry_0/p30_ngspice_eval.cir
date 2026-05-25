@@ -1,0 +1,112 @@
+* p30.cir primitive MOS PLL with PFD, charge pump, loop filter, and current-starved 3-stage ring VCO
+VVDD VDD 0 1.8
+VVSS VSS 0 0
+VBIAS VBIAS VSS 0.9
+VREF clk_ref VSS PULSE(0 1.8 1n 200p 200p 50n 100n)
+
+.model NMOS NMOS level=1 VTO=0.45 KP=220u GAMMA=0.4 PHI=0.7 LAMBDA=0.06
+.model PMOS PMOS level=1 VTO=-0.45 KP=90u GAMMA=0.4 PHI=0.7 LAMBDA=0.06
+
+* Reference edge pulse generator
+CREFEDGE raw_ref clk_ref 200f
+RREFEDGE raw_ref VSS 50k
+MREFI1 nref_b raw_ref VDD VDD PMOS W=1u L=0.18u
+MREFI2 nref_b raw_ref VSS VSS NMOS W=0.5u L=0.18u
+MREFI3 set_up nref_b VDD VDD PMOS W=1u L=0.18u
+MREFI4 set_up nref_b VSS VSS NMOS W=0.5u L=0.18u
+
+* Feedback edge pulse generator from buffered output clk_p
+CFBEDGE raw_fb clk_p 200f
+RFBEDGE raw_fb VSS 50k
+MFBI1 nfb_b raw_fb VDD VDD PMOS W=1u L=0.18u
+MFBI2 nfb_b raw_fb VSS VSS NMOS W=0.5u L=0.18u
+MFBI3 set_dn nfb_b VDD VDD PMOS W=1u L=0.18u
+MFBI4 set_dn nfb_b VSS VSS NMOS W=0.5u L=0.18u
+
+* UP latch: cross-coupled NOR gates
+MUPN1 up_p1 reset VDD VDD PMOS W=1u L=0.18u
+MUPN2 up upb up_p1 up_p1 PMOS W=1u L=0.18u
+MUPN3 up reset VSS VSS NMOS W=0.5u L=0.18u
+MUPN4 up upb VSS VSS NMOS W=0.5u L=0.18u
+
+MUPB1 up_p2 set_up VDD VDD PMOS W=1u L=0.18u
+MUPB2 upb up up_p2 up_p2 PMOS W=1u L=0.18u
+MUPB3 upb set_up VSS VSS NMOS W=0.5u L=0.18u
+MUPB4 upb up VSS VSS NMOS W=0.5u L=0.18u
+
+* DN latch: cross-coupled NOR gates
+MDNN1 dn_p1 reset VDD VDD PMOS W=1u L=0.18u
+MDNN2 dn dnb dn_p1 dn_p1 PMOS W=1u L=0.18u
+MDNN3 dn reset VSS VSS NMOS W=0.5u L=0.18u
+MDNN4 dn dnb VSS VSS NMOS W=0.5u L=0.18u
+
+MDNB1 dn_p2 set_dn VDD VDD PMOS W=1u L=0.18u
+MDNB2 dnb dn dn_p2 dn_p2 PMOS W=1u L=0.18u
+MDNB3 dnb set_dn VSS VSS NMOS W=0.5u L=0.18u
+MDNB4 dnb dn VSS VSS NMOS W=0.5u L=0.18u
+
+* Reset when both UP and DN are high
+MRESETP1 reset_b up VDD VDD PMOS W=1u L=0.18u
+MRESETP2 reset_b dn VDD VDD PMOS W=1u L=0.18u
+MRESETN1 reset_b up reset_n1 reset_n1 NMOS W=0.5u L=0.18u
+MRESETN2 reset_n1 dn VSS VSS NMOS W=0.5u L=0.18u
+MRESETI1 reset reset_b VDD VDD PMOS W=1u L=0.18u
+MRESETI2 reset reset_b VSS VSS NMOS W=0.5u L=0.18u
+
+* Charge pump into VCTRL
+MCPUP1 up_src VBIAS VDD VDD PMOS W=1.2u L=0.18u
+MCPUP2 VCTRL upb up_src up_src PMOS W=1.2u L=0.18u
+MCPDN1 dn_src VBIAS VSS VSS NMOS W=0.6u L=0.18u
+MCPDN2 VCTRL dn dn_src dn_src NMOS W=0.6u L=0.18u
+
+* Loop filter
+CCTRL VCTRL VSS 120p
+RFILT VCTRL VFILT 4.7k
+CFILT VFILT VSS 22p
+
+* Current-starved 3-stage ring VCO
+* Stage 1
+MVH1 vp1 VBIAS VDD VDD PMOS W=1.2u L=0.18u
+MVL1 vn1 VCTRL VSS VSS NMOS W=0.6u L=0.18u
+MVP1 s1 s3 vp1 vp1 PMOS W=1u L=0.18u
+MVN1 s1 s3 vn1 vn1 NMOS W=0.5u L=0.18u
+CVCO1 s1 VSS 0.5p
+
+* Stage 2
+MVH2 vp2 VBIAS VDD VDD PMOS W=1.2u L=0.18u
+MVL2 vn2 VCTRL VSS VSS NMOS W=0.6u L=0.18u
+MVP2 s2 s1 vp2 vp2 PMOS W=1u L=0.18u
+MVN2 s2 s1 vn2 vn2 NMOS W=0.5u L=0.18u
+CVCO2 s2 VSS 0.5p
+
+* Stage 3
+MVH3 vp3 VBIAS VDD VDD PMOS W=1.2u L=0.18u
+MVL3 vn3 VCTRL VSS VSS NMOS W=0.6u L=0.18u
+MVP3 s3 s2 vp3 vp3 PMOS W=1u L=0.18u
+MVN3 s3 s2 vn3 vn3 NMOS W=0.5u L=0.18u
+CVCO3 s3 VSS 0.5p
+
+* Output buffer; clk_p is also the only feedback clock
+MOB1P buf1 s3 VDD VDD PMOS W=1.5u L=0.18u
+MOB1N buf1 s3 VSS VSS NMOS W=0.75u L=0.18u
+MOB2P clk_p buf1 VDD VDD PMOS W=3u L=0.18u
+MOB2N clk_p buf1 VSS VSS NMOS W=1.5u L=0.18u
+CLOAD clk_p VSS 50f
+
+.ic V(VCTRL)=0.55 V(s1)=1.8 V(s2)=0 V(s3)=1.8 V(up)=0 V(dn)=0
+.options reltol=1e-4 vntol=1e-6 abstol=1e-12 method=gear
+.save V(clk_ref) V(clk_p) V(VCTRL) V(up) V(dn) V(s1) V(s2) V(s3)
+.tran 0.5n 120u uic
+.measure tran TREF TRIG V(clk_ref) VAL=0.9 RISE=1000 TARG V(clk_ref) VAL=0.9 RISE=1001
+.measure tran TOUT TRIG V(clk_p) VAL=0.9 RISE=1000 TARG V(clk_p) VAL=0.9 RISE=1001
+.measure tran VCTRL_AVG AVG V(VCTRL) FROM=100u TO=120u
+.measure tran PHASE_ERR TRIG V(clk_ref) VAL=0.9 RISE=1000 TARG V(clk_p) VAL=0.9 RISE=1000
+
+.control
+set filetype=ascii
+set wr_singlescale
+tran 10n 10u uic
+wrdata <REDACTED>
+quit
+.endc
+.end

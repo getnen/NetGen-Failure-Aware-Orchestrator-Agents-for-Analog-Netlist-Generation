@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: HighPass
+Task: a passive high-pass filter

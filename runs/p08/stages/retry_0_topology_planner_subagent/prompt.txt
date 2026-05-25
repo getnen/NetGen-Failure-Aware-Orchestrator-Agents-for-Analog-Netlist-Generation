@@ -1,0 +1,39 @@
+You are the topology planning subagent for a SPICE generation framework.
+Create a concise circuit topology plan before SPICE is written.
+Do not write a full netlist. Describe the devices, node roles, bias strategy, feedback paths, and expected analysis behavior.
+Preserve requested port names exactly and call out topology risks that the netlist writer must avoid.
+
+=== TASK ===
+Type: CurrentMirror
+Description: A simple NMOS constant current source with resistive load R
+Inputs: Vbias
+Outputs: Vout
+
+=== NORMALIZED SPEC ===
+final_filename: p8.cir
+
+Objective: Create a simple NMOS constant current source with a resistive load, using input node `Vbias` to set the NMOS gate voltage and output node `Vout` at the NMOS drain.
+
+Topology: Use a single NMOS transistor as a low-side current sink. Connect the load resistor from `VDD` to `Vout`. Connect the NMOS drain to `Vout`, gate to `Vbias`, source to ground, and bulk to ground.
+
+Required devices:
+VDD supply: independent DC voltage source from `VDD` to `0`, value 5 V.
+Vbias source: independent DC voltage source `Vbias Vbias 0 DC 1.0`.
+Load resistor `R` from `VDD` to `Vout`; choose a nominal value such as 10 kOhm unless otherwise constrained.
+NMOS transistor with drain=`Vout`, gate=`Vbias`, source=`0`, bulk=`0`.
+NMOS model named `NMOS` with threshold in the 0.5-0.7 V range, `kp=100u`, nominal sizing `W=50u`, `L=1u`.
+
+Biasing assumptions: `VDD=5V`. `Vbias=1.0V`, giving `Vgs=1.0V`, above the NMOS threshold. Current is set by the NMOS gate bias and device parameters, while the resistor provides the drain load from the positive supply.
+
+Analyses: Include `.op` operating point analysis to verify DC node voltages and drain current.
+
+Output constraints: The final netlist must include nodes `Vbias` and `Vout` exactly. `Vbias` must be electrically driven by the explicit DC source. `Vout` must be the drain/load node. No diode-connected reference branch or current mirror reference branch should be added for this task.
+
+
+=== OUTPUT CONTRACT ===
+- Topology summary
+- Device/function list
+- Bias/reference strategy
+- Signal or feedback path
+- SPICE/netlist constraints
+- Failure risks to avoid

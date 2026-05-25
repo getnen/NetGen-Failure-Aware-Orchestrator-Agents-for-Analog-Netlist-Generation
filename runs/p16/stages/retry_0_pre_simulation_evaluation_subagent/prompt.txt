@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Opamp
+Task: A differential opamp with an active PMOS current mirror load, a tail current source, and two outputs

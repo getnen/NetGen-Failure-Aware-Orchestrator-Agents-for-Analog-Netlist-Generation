@@ -1,0 +1,4 @@
+{"type": "thread.started", "thread_id": "019dee1d-493a-7bb1-8eb9-3a5bfd0c4d28"}
+{"type": "turn.started"}
+{"type": "item.completed", "item": {"id": "item_0", "type": "agent_message", "text": "* Single-stage NMOS differential amplifier with PMOS current mirror active load\nVDD VDD 0 DC 5\nVinp Vinp 0 DC 2.5\nVinn Vinn 0 DC 2.5\nVbias Vbias_tail 0 DC 1.2\nM1 Nmirror Vinp Ntail Ntail NMOS W=50u L=1u\nM2 Vout Vinn Ntail Ntail NMOS W=50u L=1u\nM3 Nmirror Nmirror VDD VDD PMOS W=100u L=1u\nM4 Vout Nmirror VDD VDD PMOS W=100u L=1u\nM5 Ntail Vbias_tail 0 0 NMOS W=50u L=1u\n.model NMOS NMOS (VTO=0.7 KP=100u)\n.model PMOS PMOS (VTO=-0.7 KP=50u)\n.op\n.end"}}
+{"type": "turn.completed", "usage": {"input_tokens": 25200, "cached_input_tokens": 22400, "output_tokens": 339, "reasoning_output_tokens": 128}}

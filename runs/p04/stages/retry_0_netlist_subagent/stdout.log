@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019de908-f7e9-73f0-8931-4f5356c06701"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* NMOS common-gate amplifier\nVDD VDD 0 DC 5\nVBIAS Vbias 0 DC 1.8\nVIN Vin 0 DC 0.8 AC 1\nRload VDD Vout 47k\nM1 Vout Vbias Vin Vin NMOSCG W=50u L=1u\n.model NMOSCG NMOS (LEVEL=1 VTO=0.7 KP=100u LAMBDA=0.02)\n.op\n.ac dec 20 1 1e9\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":24560,"cached_input_tokens":21376,"output_tokens":168,"reasoning_output_tokens":46}}

@@ -1,0 +1,26 @@
+* Single-supply inverting op-amp integrator
+VDD VDD 0 DC 5
+VIN Vin Vref PULSE(-0.25 0.25 0 1u 1u 1m 2m)
+
+RREF1 VDD Vref 10k
+RREF2 Vref 0 10k
+CREF Vref 0 10u
+
+R1 Vin NINV 10k
+CF Vout NINV 100n
+RFLEAK Vout NINV 10Meg
+
+ITAIL NTAIL 0 DC 200u
+MNPLUS N1 Vref NTAIL 0 NMOS_L1
+MNMINUS Vout NINV NTAIL 0 NMOS_L1
+MPLOAD1 N1 N1 VDD VDD PMOS_L1
+MPLOAD2 Vout N1 VDD VDD PMOS_L1
+CLOAD Vout 0 10p
+
+.model NMOS_L1 NMOS (LEVEL=1 VTO=0.7 KP=500u LAMBDA=0.02)
+.model PMOS_L1 PMOS (LEVEL=1 VTO=-0.7 KP=250u LAMBDA=0.02)
+
+.ic V(Vout)=2.5 V(NINV)=2.5
+.tran 1u 10m
+.print tran V(Vin) V(Vout)
+.end

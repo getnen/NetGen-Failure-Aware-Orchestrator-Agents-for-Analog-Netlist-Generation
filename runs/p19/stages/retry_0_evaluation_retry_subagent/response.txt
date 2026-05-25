@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "retryable": false,
+  "summary": "Differential output stddev: 0.1638654392223909",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Differential output stddev: 0.1638654392223909",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "next_agent": "validator_subagent",
+  "reason": "Pre-simulation evaluation found issues that should be repaired before ngspice/checker execution.",
+  "retry_index": 0,
+  "context": {
+    "syntax_issues": [],
+    "topology_issues": [
+      "multi_stage_cmos_output_chain_after_decision_core"
+    ]
+  }
+}

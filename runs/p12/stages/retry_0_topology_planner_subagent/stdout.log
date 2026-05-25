@@ -1,0 +1,65 @@
+**Topology Summary**
+
+Use a 2-stage passive RC ladder from `Vin` to `Vout`:
+
+1. A first-order high-pass section: series `C1` from `Vin` to internal node `N1`, with `R1` from `N1` to ground.
+2. A first-order low-pass section: series `R2` from `N1` to `Vout`, with `C2` from `Vout` to ground.
+
+This realizes a passive band-pass response with low-frequency attenuation from the input coupling capacitor and high-frequency attenuation from the output shunt capacitor.
+
+**Device/Function List**
+
+- `V1` between `Vin` and `0`, AC magnitude 1.
+  Purpose: required small-signal excitation.
+- `C1` from `Vin` to `N1`.
+  Purpose: high-pass series element; blocks low frequency/DC.
+- `R1` from `N1` to `0`.
+  Purpose: high-pass return path; sets low cutoff with `C1`.
+- `R2` from `N1` to `Vout`.
+  Purpose: low-pass series element; isolates `Vout` from `N1`.
+- `C2` from `Vout` to `0`.
+  Purpose: low-pass shunt element; sets high cutoff with `R2`.
+
+Recommended values:
+- `C1 = 10 nF`
+- `R1 = 10 kOhm`
+- `R2 = 10 kOhm`
+- `C2 = 1 nF`
+
+Expected nominal corners:
+- Low corner near 1.59 kHz
+- High corner near 15.9 kHz
+- Broad center region around 5 kHz
+
+**Bias/Reference Strategy**
+
+No DC bias network or supply rails are needed. This is a passive AC filter with ground node `0` as the only reference. `Vin` must not float; it is driven explicitly by `V1 Vin 0 AC 1`. `N1` is an internal signal node only.
+
+**Signal Or Feedback Path**
+
+Signal path is strictly forward:
+
+`Vin` -> `C1` -> `N1` -> `R2` -> `Vout`
+
+Shunt return paths:
+- `N1` -> `R1` -> `0`
+- `Vout` -> `C2` -> `0`
+
+There is no intentional feedback loop. Any interaction is due to passive loading between the two RC sections.
+
+**SPICE/Netlist Constraints**
+
+- Preserve node names `Vin` and `Vout` exactly.
+- Use only primitive passive elements plus the independent source `V1`.
+- Include `.ac dec 20 1 1e9`.
+- Do not add buffers, dependent sources, switches, behavioral elements, or op-amps.
+- Keep one internal node such as `N1`; do not collapse stages into a single node arrangement that destroys the band-pass behavior.
+
+**Failure Risks To Avoid**
+
+- Do not omit `R1`; without it, the high-pass node can become improperly referenced.
+- Do not place `C2` on `N1`; it must shunt `Vout` to ground for the low-pass stage.
+- Do not swap series/shunt roles of `C1` and `R2`; that changes the filter type.
+- Do not expect 0 dB or higher gain; this is passive and unbuffered, so insertion loss is normal.
+- Do not assume ideal uncoupled corner frequencies; `R2` and `C2` load the first stage, so the response will be softened and the exact peak may shift somewhat.
+- Do not rename ports or use floating aliases for `Vin`/`Vout`.

@@ -1,0 +1,2 @@
+{"ts_utc": "08:49:52.271223+00:00", "type": "run.started", "payload": {"run_id": "p22_a01", "backend": "codex", "task_id": "22", "task_type": "Oscillator", "task_level": "Hard", "output_cir": "p22.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "08:51:53.134030+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 2}}

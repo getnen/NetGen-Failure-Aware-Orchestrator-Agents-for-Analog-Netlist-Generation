@@ -1,0 +1,59 @@
+**Topology Summary**
+
+Use a fully differential single-stage NMOS-input telescopic cascode opamp powered from `VDD = 5 V`. The two outputs are high-impedance internal gain nodes: `Voutp` and `Vout`. The structure is symmetric: each side has an NMOS input device, an NMOS cascode above it, a PMOS cascode load, and a PMOS current-source load to `VDD`. A single NMOS tail current source biases both input branches.
+
+**Device/Function List**
+
+- `M5`: NMOS tail current source. Drain at tail node, source/bulk at `0`, gate at `Vbias1`.
+- `M1`: NMOS input transistor for `Vinp`. Source at tail node, drain at `nleft`, gate at `Vinp`, bulk tied to source.
+- `M2`: NMOS input transistor for `Vinn`. Source at tail node, drain at `nright`, gate at `Vinn`, bulk tied to source.
+- `M6`: NMOS cascode above `M1`. Source at `nleft`, drain at `Voutp`, gate at `Vbias2`, bulk tied to source.
+- `M7`: NMOS cascode above `M2`. Source at `nright`, drain at `Vout`, gate at `Vbias2`, bulk tied to source.
+- `M3`: PMOS upper current-source load on `Voutp` side. Source/bulk at `VDD`, drain at `pleft`, gate at `Vbias4`.
+- `M4`: PMOS upper current-source load on `Vout` side. Source/bulk at `VDD`, drain at `pright`, gate at `Vbias4`.
+- `M8`: PMOS cascode load on `Voutp` side. Source/bulk at `pleft`, drain at `Voutp`, gate at `Vbias3`.
+- `M9`: PMOS cascode load on `Vout` side. Source/bulk at `pright`, drain at `Vout`, gate at `Vbias3`.
+
+**Bias/Reference Strategy**
+
+Use explicit independent DC voltage sources for all named input and bias nodes:
+
+- `Vinp = 2.5 V`
+- `Vinn = 2.5 V`
+- `Vbias1 = 1.2 V`
+- `Vbias2 = 3.0 V`
+- `Vbias3 = 2.0 V`
+- `Vbias4 = 4.0 V`
+- `VDD = 5 V`
+
+These biases are intended to turn on all stacked devices at `.op`, keep the NMOS input pair and cascodes in saturation, and leave enough output headroom for the PMOS cascode loads. Use the requested nominal MOS models: NMOS `VTO=0.7`, `KP=100u`, `W=50u`, `L=1u`; PMOS `VTO=-0.7`, `KP=50u`, `W=100u`, `L=1u`.
+
+**Signal Or Feedback Path**
+
+There is no explicit feedback network. This is an open-loop telescopic gain stage.
+
+- Differential input: `Vinp - Vinn`
+- Positive-side output node: `Voutp`
+- Negative-side output node: `Vout`
+
+For balanced DC input, both branches should conduct similar current and `Voutp`/`Vout` should settle close to each other. A small increase at `Vinp` increases current in the `Voutp` branch, tending to pull `Voutp` downward relative to `Vout`.
+
+**SPICE/Netlist Constraints**
+
+- Final filename must be `p21.cir`.
+- Preserve exact node names: `Vinp`, `Vinn`, `Vbias1`, `Vbias2`, `Vbias3`, `Vbias4`, `Voutp`, `Vout`.
+- Include `.op`.
+- Do not use subcircuits.
+- Do not hide required ports behind renamed aliases.
+- Every named input/bias node must be driven by an explicit independent voltage source.
+- `Voutp` and `Vout` must remain high-impedance gain nodes between NMOS cascodes and PMOS cascodes.
+- Bulk terminals should be tied to each MOSFET source per task guidance.
+
+**Failure Risks To Avoid**
+
+- Do not short `Voutp` and `Vout`; they must be separate differential outputs.
+- Do not connect PMOS cascode drains/sources backward; upper PMOS sources go toward `VDD`, cascode drains go to outputs.
+- Do not omit DC sources for `Vbias1` through `Vbias4`, `Vinp`, or `Vinn`.
+- Do not tie outputs directly to voltage sources or resistive loads that destroy high output impedance.
+- Avoid bias choices that cut off any cascode or current-source device at `.op`.
+- Avoid using only two NMOS and two PMOS devices; the required topology needs nine MOSFETs total: four NMOS signal/cascode devices, four PMOS load/cascode devices, and one NMOS tail source.

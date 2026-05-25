@@ -1,0 +1,1 @@
+16:28:16.869292Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer realm=\"OAuth\", resource_metadata=\"https:/<REDACTED>\", error=\"invalid_token\", error_description=\"Missing or invalid access token\"" })

@@ -1,0 +1,25 @@
+* Fully differential NMOS-input telescopic cascode opamp
+Vsup VDD 0 DC 5
+Vvinp Vinp 0 DC 2.5
+Vvinn Vinn 0 DC 2.5
+Vb1 Vbias1 0 DC 1.2
+Vb2 Vbias2 0 DC 3.0
+Vb3 Vbias3 0 DC 2.0
+Vb4 Vbias4 0 DC 4.0
+
+M5 tail Vbias1 0 0 NMOS W=50u L=1u
+M1 nleft Vinp tail tail NMOS W=50u L=1u
+M2 nright Vinn tail tail NMOS W=50u L=1u
+M6 Voutp Vbias2 nleft nleft NMOS W=50u L=1u
+M7 Vout Vbias2 nright nright NMOS W=50u L=1u
+
+M3 pleft Vbias4 VDD VDD PMOS W=100u L=1u
+M4 pright Vbias4 VDD VDD PMOS W=100u L=1u
+M8 Voutp Vbias3 pleft pleft PMOS W=100u L=1u
+M9 Vout Vbias3 pright pright PMOS W=100u L=1u
+
+.model NMOS NMOS (VTO=0.7 KP=100u LAMBDA=0.02)
+.model PMOS PMOS (VTO=-0.7 KP=50u LAMBDA=0.02)
+
+.op
+.end

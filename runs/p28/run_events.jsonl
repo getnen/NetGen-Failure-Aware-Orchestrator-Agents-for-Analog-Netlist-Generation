@@ -1,0 +1,2 @@
+{"ts_utc": "16:05:06.908308+00:00", "type": "run.started", "payload": {"run_id": "p28_a00", "backend": "codex", "task_id": "28", "task_type": "Schmitt", "task_level": "Hard", "output_cir": "p28.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "16:07:44.262318+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 1}}

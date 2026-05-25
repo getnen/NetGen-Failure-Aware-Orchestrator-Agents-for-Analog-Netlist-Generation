@@ -1,0 +1,83 @@
+You are the validator/fixer subagent.
+Repair syntax issues in this SPICE netlist if needed.
+Return ONLY corrected netlist text.
+Keep behavior equivalent when possible.
+Keep the circuit in primitive-device ngspice form only: R, C, L, V, I, D, Q, M, X where needed.
+Do not introduce behavioral or controlled sources such as B, E, F, G, or H elements.
+Ensure there is one .end at the end.
+
+=== NETLIST TO VALIDATE ===
+* 5V single-supply transistor Wien bridge oscillator
+VDD VDD 0 DC 5
+VREF Vref 0 DC 2.5
+
+Rw1 Vout Vwser 10k
+Cw1 Vwser Vinp 10n
+Rw2 Vinp Vref 10k
+Cw2 Vinp Vref 10n
+
+Rf1 Vout Vflim 3.3k
+Rf2 Vflim Vinn 18k
+Rg Vinn Vref 10k
+* Dlim1 Vout Vflim DLIM
+* Dlim2 Vflim Vout DLIM
+
+Itail ntail 0 DC 260u
+M1 nload Vinp ntail ntail NMOS W=180u L=2u
+M2 nout1 Vinn ntail ntail NMOS W=180u L=2u
+M3 nload nload VDD VDD PMOS W=420u L=2u
+M4 nout1 nload VDD VDD PMOS W=420u L=2u
+
+M5 nout2 nout1 VDD VDD PMOS W=560u L=2u
+M6 nout2 nbiasn 0 0 NMOS W=220u L=2u
+
+VBN nbiasn 0 DC 1.05
+Rdrv nout2 ndrv 3.3k
+Cdom ndrv Vout 8p
+M7 Vout ndrv VDD VDD PMOS W=420u L=2u
+M8 Vout nbiasn 0 0 NMOS W=180u L=2u
+Rbleed Vout Vref 100k
+Cload Vout 0 50p
+
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=220u LAMBDA=0.02
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=90u LAMBDA=0.02
+.model DLIM D IS=1n RS=20 N=1.8 CJO=0.2p
+
+.ic V(Vinp)=2.501 V(Vinn)=2.499 V(Vout)=2.55 V(Vwser)=2.6 V(nout1)=2.2 V(nout2)=2.8 V(ndrv)=2.4
+.save V(Vout) V(Vinp) V(Vinn)
+.tran 1u 5m
+.end
+
+
+=== REPAIR GUIDANCE ===
+The previous attempt was evaluated functionally, not just syntactically. Repair the circuit so the measured behavior matches the task intent. If the evaluator reports topology-level failure, change the topology rather than only tweaking values. If a required input node appears only as an internal node, add the missing independent source. If the evaluator reports the same failure repeatedly, avoid regenerating the identical circuit.
+
+Use evaluator feedback as a design-debug signal. If the report says the circuit is not functioning correctly, identify the missing functional mechanism: biasing, load choice, feedback polarity, reference level, insufficient gain, or absent frequency-selective element. For waveform tasks, repair the netlist so the requested waveform or response is visible in the configured analysis rather than merely producing a valid operating point.
+
+For oscillator retry failures, if the report says 'IC on non-existent node - vinp/vinn' or amplitude is too small, the startup nodes were not exposed or the loop gain/phase conditions were wrong. Repair by naming the internal differential input nodes Vinp and Vinn, centering the bias network near mid-supply, ensuring the feedback network connects to the correct op-amp input polarity, and removing overly hard limiter/clamp behavior that suppresses or distorts the analog oscillation. If the retry has drifted into behavioral or controlled-source amplifier shortcuts, replace them with a real biased transistor gain stage instead of tuning the shortcut.
+
+=== SYNTAX / FORMAT ISSUES DETECTED BEFORE SIMULATION ===
+- contains_disabled_spice_elements
+Repair these issues before returning the netlist.
+
+=== FUNCTIONAL EVALUATION FEEDBACK ===
+Functional evaluation failed on retry 1.
+Failure type: functional_error
+Suggested next stage: validator_subagent
+
+Evaluator report:
+Output amplitude: 5.0336180414
+Output stddev: 1.0904519262252117
+Tail amplitude: 5.0313667758
+Tail stddev: 1.0857957944723862
+Dominant frequency: 1597.011676231751
+Dominant magnitude: 0.5010558371320123
+Peak count: 3834
+Period variation: 9.571306563608877
+
+Evaluator-aware repair hint for Oscillator/VCO transient failure:
+- The direct transient evaluator inspected the steady-state half of the waveform and did not find stable periodic oscillation.
+- Treat low peak count, tiny tail amplitude, or infinite period variation as a startup or loop-gain problem: preserve explicit Vinp/Vinn and Vout nodes, keep the amplifier biased near mid-supply, and ensure the active stage can overcome the RC network loss.
+- For Wien-bridge loops, simplify toward a clean bridge around a real analog gain stage near mid-supply; avoid exotic complementary-input cores, commented-out devices, and hard clipping as the main startup mechanism.
+- If a ripple exists at Vout but periodicity never settles, the loop likely has the right rough frequency range but insufficient gain margin or incorrect feedback polarity.
+Repair the current netlist with minimal changes when the architecture is salvageable.

@@ -1,0 +1,2 @@
+{"ts_utc": "13:56:55.585430+00:00", "type": "run.started", "payload": {"run_id": "p19_a00", "backend": "codex", "task_id": "19", "task_type": "Mixer", "task_level": "Hard", "output_cir": "p19.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "13:58:05.079442+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 1}}

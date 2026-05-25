@@ -1,0 +1,95 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+Do not leave commented-out candidate SPICE elements in the returned deck; remove dead alternatives instead of commenting them out.
+If a stage or limiter is not used, delete every dependent helper node reference instead of returning a half-disabled structure.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p11.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a first-order passive RC high-pass filter. Drive `Vin` with an explicit independent AC source referenced to node `0`. Place `C1` in series from `Vin` to `Vout`, and place `R1` from `Vout` to `0`. The output `Vout` is the capacitor/resistor junction. This gives DC blocking and passes higher-frequency content to the load resistor.
+
+**Device/Function List**
+
+- `V1`: independent AC source from `Vin` to `0`, AC magnitude `1`
+- `C1 = 1uF`: series coupling element between `Vin` and `Vout`
+- `R1 = 1k`: shunt/output return element from `Vout` to `0`
+
+**Bias/Reference Strategy**
+
+No supply rails are needed. Node `0` is the only reference. DC operating point is naturally defined because `R1` gives `Vout` a return to ground; `Vin` is explicitly driven by `V1`. No extra bias network is required for AC analysis.
+
+**Signal Or Feedback Path**
+
+Signal path is `V1 -> Vin -> C1 -> Vout`, with `R1` returning `Vout` to `0`. There is no active feedback path; this is a purely passive single-pole network. At low frequency, capacitor reactance is large so `Vout` is attenuated. At high frequency, capacitor reactance falls and `Vout` approaches `Vin`.
+
+**SPICE/Netlist Constraints**
+
+- Preserve node names exactly: `Vin`, `Vout`
+- Keep `V1` explicit from `Vin` to `0`
+- Connect `C1` only between `Vin` and `Vout`
+- Connect `R1` only between `Vout` and `0`
+- Use only primitive SPICE elements
+- Include `.ac dec 20 1 1e9`
+- Expected cutoff is about `1 / (2*pi*1k*1uF) ~= 159 Hz`
+
+**Failure Risks To Avoid**
+
+- Do not swap the RC order; `R1` must be the shunt element at `Vout`, not a series input resistor
+- Do not connect `Vout` on the source side of `C1`
+- Do not omit `R1`, or `Vout` will float
+- Do not rename or alias `Vin`/`Vout`
+- Do not replace the RC network with behavioral or controlled-source equivalents
+- Do not leave the input implicit; `Vin` must be directly driven by `V1`
+
+=== NORMALIZED SPEC ===
+final_filename: p11.cir
+
+Objective:
+Implement a primitive passive RC high-pass filter with input node Vin and output node Vout. The circuit must pass high-frequency content from Vin to Vout while attenuating low-frequency and DC content. With C1 = 1 uF and R1 = 1 kOhm, the cutoff should be about 1 / (2*pi*R*C) ≈ 159 Hz.
+
+Topology:
+Use the standard first-order passive high-pass arrangement:
+- C1 in series between Vin and Vout
+- R1 from Vout to GND (node 0)
+
+Required devices:
+- Independent AC source V1 driving the named input node: V1 from Vin to 0 with AC magnitude 1
+- Capacitor C1 = 1uF
+- Resistor R1 = 1k
+
+Key interconnectivity:
+- Vin is the driven input node and must be connected directly to the positive terminal of V1
+- The negative terminal of V1 goes to node 0
+- C1 connects from Vin to Vout
+- R1 connects from Vout to node 0
+- Vout is taken at the junction of C1 and R1
+
+Biasing assumptions:
+- No supply rails are required; this is a passive source-referenced filter
+- Ground reference is SPICE node 0
+- No DC bias network is needed because the requested analysis is AC small-signal and the resistor provides the output return path
+
+Analysis required:
+- Run .ac dec 20 1 1e9
+- Expected behavior:
+  - Strong attenuation at low frequency and at DC
+  - Approximately +20 dB/dec magnitude rise below cutoff
+  - About -3 dB at roughly 160 Hz
+  - Magnitude approaches 0 dB at high frequency because the output is across R1 in a passive divider that tends to unity as capacitor reactance becomes small
+
+Output constraints:
+- Preserve node names exactly: Vin and Vout
+- Both Vin and Vout must appear in the final netlist
+- Use primitive SPICE devices only
+- Do not replace the RC network with behavioral elements or controlled sources
+- Keep the source explicit; Vin must not be left floating or implied internally

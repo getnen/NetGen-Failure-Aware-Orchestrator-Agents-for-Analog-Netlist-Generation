@@ -1,0 +1,20 @@
+{
+  "status": "failed",
+  "route_to": "validator_subagent",
+  "failure_type": "functional_error",
+  "retryable": true,
+  "summary": "Functional evaluation failed on retry 2.\nFailure type: functional_error\nSuggested next stage: validator_subagent\n\nEvaluator report:\nOutput amplitude: 5.011705006\nOutput stddev: 1.3195015868637097\nTail amplitude: 5.010539406\nTail stddev: 1.3154827404414995\nDominant frequency: 1504.2723803577344\nDominant magnitude: 0.6070094743244432\nPeak count: 769\nPeriod variation: 4.810678320540648\n\nEvaluator-aware repair hint for Oscillator/VCO transient failure:\n- The direct transient evaluator inspected the steady-state half of the waveform and did not find stable periodic oscillation.\n- Treat low peak count, tiny tail amplitude, or infinite period variation as a startup or loop-gain problem: preserve explicit Vinp/Vinn and Vout nodes, keep the amplifier biased near mid-supply, and ensure the active stage can overcome the RC network loss.\n- For Wien-bridge loops, simplify toward a clean bridge around a real analog gain stage near mid-supply; avoid exotic complementary-input cores, commented-out devices, and hard clipping as the main startup mechanism.\n- If a ripple exists at Vout but periodicity never settles, the loop likely has the right rough frequency range but insufficient gain margin or incorrect feedback polarity.",
+  "evaluation": {
+    "status": "failed",
+    "failure_type": "functional_error",
+    "message": "Output amplitude: 5.011705006\nOutput stddev: 1.3195015868637097\nTail amplitude: 5.010539406\nTail stddev: 1.3154827404414995\nDominant frequency: 1504.2723803577344\nDominant magnitude: 0.6070094743244432\nPeak count: 769\nPeriod variation: 4.810678320540648",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 2
+  }
+}

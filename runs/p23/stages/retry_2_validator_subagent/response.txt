@@ -1,0 +1,40 @@
+* 5V single-supply transistor Wien bridge oscillator
+VDD VDD 0 DC 5
+VREF Vref 0 DC 2.5
+
+Rw1 Vout Vwser 10k
+Cw1 Vwser Vinp 10n
+Rw2 Vinp Vref 10k
+Cw2 Vinp Vref 10n
+
+Rf1 Vout Vflim 3.3k
+Rf2 Vflim Vinn 18k
+Rg Vinn Vref 10k
+Dlim1 Vflim Vinn DLIM
+Dlim2 Vinn Vflim DLIM
+
+Itail ntail 0 DC 340u
+M1 nout1 Vinp ntail ntail NMOS W=240u L=2u
+M2 nload Vinn ntail ntail NMOS W=240u L=2u
+M3 nout1 nout1 VDD VDD PMOS W=520u L=2u
+M4 nload nout1 VDD VDD PMOS W=520u L=2u
+
+M5 nout2 nload VDD VDD PMOS W=700u L=2u
+M6 nout2 nbiasn 0 0 NMOS W=220u L=2u
+
+VBN nbiasn 0 DC 1.05
+Rdrv nout2 ndrv 2.2k
+Cdom ndrv Vout 4p
+M7 Vout ndrv VDD VDD PMOS W=520u L=2u
+M8 Vout nbiasn 0 0 NMOS W=180u L=2u
+Rbleed Vout Vref 100k
+Cload Vout 0 50p
+
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=220u LAMBDA=0.02
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=90u LAMBDA=0.02
+.model DLIM D IS=1n RS=10 N=1.8 CJO=0.2p
+
+.ic V(Vinp)=2.501 V(Vinn)=2.499 V(Vout)=2.55 V(Vwser)=2.6 V(nload)=2.2 V(nout1)=2.2 V(nout2)=2.8 V(ndrv)=2.4
+.save V(Vout) V(Vinp) V(Vinn)
+.tran 1u 5m
+.end

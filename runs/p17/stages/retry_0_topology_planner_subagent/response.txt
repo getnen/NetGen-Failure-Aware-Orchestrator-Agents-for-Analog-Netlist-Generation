@@ -1,0 +1,39 @@
+**Topology Summary**
+Build a 5 V four-transistor NMOS cascode current mirror. The input/reference side is a stacked diode-connected NMOS branch that generates two bias voltages. The output side is a matched stacked NMOS branch that mirrors the reference current into a resistive load connected to `VDD`.
+
+**Device/Function List**
+- `VDD`: independent DC supply, `VDD` to `0`, value `5 V`.
+- `IREFSRC`: independent DC current source from `VDD` to `Iref`, value `100uA`.
+- `R`: load resistor from `VDD` to `Iout`, value `10k`.
+- `M1`: reference bottom NMOS, diode-connected with `drain=gate=nref_mid`, `source=0`, `bulk=0`.
+- `M2`: reference cascode/top NMOS, diode-connected with `drain=gate=Iref`, `source=nref_mid`, `bulk=nref_mid`.
+- `M3`: output bottom NMOS mirror device, `drain=nout_mid`, `gate=nref_mid`, `source=0`, `bulk=0`.
+- `M4`: output cascode/top NMOS, `drain=Iout`, `gate=Iref`, `source=nout_mid`, `bulk=nout_mid`.
+- NMOS model: LEVEL 1 NMOS, `VTO≈0.6 V`, `KP=100u`, devices sized `W=50u`, `L=1u`.
+
+**Bias/Reference Strategy**
+`IREFSRC` forces `100uA` from `VDD` into `Iref`, through the diode-connected reference stack `M2-M1` to ground. This self-biases:
+- `nref_mid`: gate bias for bottom mirror devices `M1/M3`.
+- `Iref`: gate bias for cascode devices `M2/M4`.
+
+Bulks should be tied to sources to avoid unwanted body effect.
+
+**Signal Or Feedback Path**
+The reference stack provides local diode-connected feedback: `M1` regulates `nref_mid`, and `M2` regulates `Iref`. These two voltages are copied to the output stack gates, causing `M3/M4` to sink approximately the same current as the reference branch, limited by output compliance and the `10k` load.
+
+**SPICE/Netlist Constraints**
+- Final filename should be `p17.cir`.
+- Preserve node names exactly: `Iref` and `Iout`.
+- Include only `.op` analysis.
+- Do not use subcircuits or placeholders.
+- Use explicit independent source line equivalent to: `IREFSRC VDD Iref DC 100uA`.
+- `Iout` must be the node shared by `R` bottom terminal and `M4` drain.
+- `Iref` must be the node shared by `IREFSRC` output, `M2` drain, `M2` gate, and `M4` gate.
+
+**Failure Risks To Avoid**
+- Do not reverse `IREFSRC`; it must force current from `VDD` into `Iref`.
+- Do not omit diode connections on `M1` and `M2`.
+- Do not tie `M2` or `M4` bulk to ground; tie each to its source node.
+- Do not rename `Iref` or `Iout`.
+- Do not connect `R` to an internal node such as `nout_mid`; it belongs from `VDD` to `Iout`.
+- Ensure output branch has enough voltage headroom; otherwise `.op` may show reduced mirror current or one output transistor leaving saturation.

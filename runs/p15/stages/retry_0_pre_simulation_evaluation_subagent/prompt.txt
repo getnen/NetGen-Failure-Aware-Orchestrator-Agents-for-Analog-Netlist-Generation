@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Amplifier
+Task: A single-stage amplifier (common-source with PMOS diode-connected load (gate and drain are shorted))

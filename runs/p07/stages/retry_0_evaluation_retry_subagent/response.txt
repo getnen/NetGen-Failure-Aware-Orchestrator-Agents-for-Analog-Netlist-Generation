@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "retryable": false,
+  "summary": "Inverter low-input output: 5.00 V\nInverter high-input output: 0.00 V",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Inverter low-input output: 5.00 V\nInverter high-input output: 0.00 V",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

@@ -1,0 +1,2 @@
+{"ts_utc": "14:02:40.454731+00:00", "type": "run.started", "payload": {"run_id": "p20_a00", "backend": "codex", "task_id": "20", "task_type": "Opamp", "task_level": "Hard", "output_cir": "p20.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "14:04:21.927292+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 1}}

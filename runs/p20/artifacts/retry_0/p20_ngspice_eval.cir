@@ -1,0 +1,37 @@
+* 5 V CMOS two-stage differential opamp
+VDD VDD 0 DC 5
+Vinp Vinp 0 DC 2.5 AC 0.5
+Vinn Vinn 0 DC 2.5 AC -0.5
+Vb1 Vbias1 0 DC 1.0
+Vb2 Vbias2 0 DC 4.0
+Vb3 Vbias3 0 DC 1.2
+
+M1 Nmir Vinp Ntail Ntail NMOS W=20u L=1u
+M2 Voutp Vinn Ntail Ntail NMOS W=20u L=1u
+M3 Nmir Nmir VDD VDD PMOS W=80u L=1u
+M4 Voutp Nmir VDD VDD PMOS W=80u L=1u
+M5 Ntail Vbias1 0 0 NMOS W=20u L=1u
+
+M6 Vout Voutp 0 0 NMOS W=80u L=1u
+M7 Vout Vbias2 VDD VDD PMOS W=160u L=1u
+
+Cc Voutp Vout 2p
+CL Vout 0 1p
+
+M8 Vaux Vbias3 0 0 NMOS W=1u L=1u
+Raux VDD Vaux 1meg
+
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=100u LAMBDA=0.02
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=50u LAMBDA=0.02
+
+.op
+.ac dec 20 1 1Meg
+
+.control
+set filetype=ascii
+set wr_singlescale
+ac dec 20 1 1e9
+wrdata <REDACTED> frequency vm(Voutp)
+quit
+.endc
+.end

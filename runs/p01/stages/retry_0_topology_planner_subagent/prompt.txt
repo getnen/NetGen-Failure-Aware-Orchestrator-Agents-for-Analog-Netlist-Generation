@@ -1,0 +1,49 @@
+You are the topology planning subagent for a SPICE generation framework.
+Create a concise circuit topology plan before SPICE is written.
+Do not write a full netlist. Describe the devices, node roles, bias strategy, feedback paths, and expected analysis behavior.
+Preserve requested port names exactly and call out topology risks that the netlist writer must avoid.
+
+=== TASK ===
+Type: Amplifier
+Description: a single-stage common-source amplifier with resistive load R
+Inputs: Vin
+Outputs: Vout
+
+=== NORMALIZED SPEC ===
+final_filename: p1.cir
+
+Objective: Create a single-stage NMOS common-source voltage amplifier using a resistive load, with input node `Vin` and output node `Vout`.
+
+Topology: Use one NMOS transistor in common-source configuration. Connect the NMOS drain to `Vout`, source to ground, bulk tied to source/ground, and gate driven by `Vin`. Connect a resistive load `R` from `VDD` to `Vout`.
+
+Required devices:
+- Independent DC supply `VDD` from node `VDD` to ground, value 5 V.
+- Independent input source driving node `Vin`, with DC bias at or above 1.2 V and small-signal AC magnitude for gain analysis.
+- One NMOS transistor using model `NMOS`, with W=50u and L=1u.
+- One resistor load `R` from `VDD` to `Vout`, value between 10k and 100k ohm. Use a nominal value such as 50k unless otherwise optimized.
+
+Biasing assumptions:
+- Bias `Vin` with DC value around 1.2 V to satisfy the requirement that the NMOS gate is at least 1.2 V.
+- With source at ground and gate at 1.2 V, expected overdrive is about 0.5 V using Vth=0.7 V.
+- Choose the load resistor so the DC drain voltage at `Vout` remains high enough for saturation: approximately `Vout >= Vin - Vth`, so target `Vout > 0.5 V`.
+- NMOS bulk must be tied to source/ground.
+
+Analyses:
+- Include `.op` to verify DC operating point, drain voltage, current, and saturation condition.
+- Include `.ac dec 20 1 1e9` to evaluate small-signal voltage gain from `Vin` to `Vout`.
+
+Output constraints:
+- The final SPICE netlist must be saved as `p1.cir`.
+- Nodes `Vin` and `Vout` must appear exactly with those names.
+- `Vin` must be electrically driven by an explicit independent voltage source.
+- `Vout` must be the NMOS drain and amplifier output node.
+- Use explicit MOSFET model definitions matching: NMOS Vth=0.7 V, kp=100u, W=50u, L=1u.
+
+
+=== OUTPUT CONTRACT ===
+- Topology summary
+- Device/function list
+- Bias/reference strategy
+- Signal or feedback path
+- SPICE/netlist constraints
+- Failure risks to avoid

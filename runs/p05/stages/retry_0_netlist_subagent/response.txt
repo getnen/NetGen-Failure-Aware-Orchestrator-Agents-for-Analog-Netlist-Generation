@@ -1,0 +1,11 @@
+* Single-ended NMOS cascode common-source amplifier
+VDD VDD 0 DC 5
+VIN Vin 0 DC 1.2 AC 1
+VBIAS Vbias 0 DC 2.5
+Rload VDD Vout 10k
+M1 Ncas Vin 0 0 NMOS W=50u L=1u
+M2 Vout Vbias Ncas Ncas NMOS W=50u L=1u
+.model NMOS NMOS (LEVEL=1 VTO=0.7 KP=100u LAMBDA=0.02)
+.op
+.ac dec 20 1 1e9
+.end

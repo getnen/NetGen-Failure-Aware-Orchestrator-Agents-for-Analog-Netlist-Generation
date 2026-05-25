@@ -1,0 +1,112 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p18.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For Opamp tasks, preserve all requested bias input nodes exactly as independent DC sources, keep every MOSFET biased in conduction, and avoid floating high-impedance outputs by adding only minimal leak paths if needed for convergence. A passing topology needs differential gain larger than common-mode gain under the checker's 100 Hz small-signal test, not merely a valid .op point. Prefer plain `DC ... AC magnitude` input-source syntax without extra AC phase terms unless phase is truly required, because evaluators may perturb one source to create differential excitation. For stacked op-amps, keep a sensible bias ladder: tail bias lowest, lower NMOS cascode bias above it, and upper PMOS bias above the PMOS load/cascode bias.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Single-stage NMOS differential common-source amplifier with PMOS current-mirror active load and NMOS tail current source. The requested ports must remain exactly `Vinp`, `Vinn`, and `Vout`. The output `Vout` is single-ended at the drain of the right input NMOS and right PMOS mirror load.
+
+**Device/Function List**
+
+- `VDD`: 5 V DC supply from `VDD` to `0`.
+- `Vinp`: 2.5 V DC input source from `Vinp` to `0`.
+- `Vinn`: 2.5 V DC input source from `Vinn` to `0`.
+- `Vbias`: 1.2 V DC tail bias source from `Vbias_tail` to `0`.
+
+- `M1`: NMOS left input transistor. Drain `Nmirror`, gate `Vinp`, source/bulk `Ntail`.
+- `M2`: NMOS right input transistor. Drain `Vout`, gate `Vinn`, source/bulk `Ntail`.
+- `M3`: PMOS diode-connected active load. Source/bulk `VDD`, gate/drain `Nmirror`.
+- `M4`: PMOS mirror load. Source/bulk `VDD`, gate `Nmirror`, drain `Vout`.
+- `M5`: NMOS tail current source. Drain `Ntail`, gate `Vbias_tail`, source/bulk `0`.
+
+**Bias/Reference Strategy**
+
+At `Vinp=Vinn=2.5V`, `M1` and `M2` should share the tail current approximately equally. `M5` is gate-biased by `Vbias_tail=1.2V`, producing a nonzero tail current while allowing `Ntail` to rise above ground.
+
+`M3` is diode-connected, so the left branch current establishes the PMOS mirror gate voltage at `Nmirror`. `M4` mirrors this current into the right/output branch. `Vout` should bias somewhere between `0` and `VDD`, not pinned to either rail.
+
+**Signal or Feedback Path**
+
+Differential input action occurs through the shared source node `Ntail`. A change in `Vinp` changes current through `M1`, which changes `Nmirror` and therefore the PMOS mirror gate drive for `M4`. This creates active-load current steering into `Vout`. `Vinn` directly controls `M2`, which sinks current from `Vout`.
+
+There is local diode feedback around `M3` because its gate and drain are tied at `Nmirror`. This stabilizes the PMOS mirror bias but is not global amplifier feedback.
+
+**SPICE/Netlist Constraints**
+
+- Final file should be `p18.cir`.
+- Include `.op`.
+- Use model names exactly `NMOS` and `PMOS`.
+- NMOS model: `VTO=0.7`, `KP=100u`.
+- PMOS model: `VTO=-0.7`, `KP=50u`.
+- Use sizes:
+  - `M1`, `M2`, `M5`: `W=50u L=1u`
+  - `M3`, `M4`: `W=100u L=1u`
+- Do not use subcircuits.
+- Do not introduce hidden bias sources.
+- `Vinp`, `Vinn`, and `Vout` must appear exactly with those names.
+- `Vinp` and `Vinn` must be explicitly driven by independent DC sources.
+
+**Failure Risks To Avoid**
+
+- Do not accidentally implement dual resistive loads; the normalized spec requires PMOS current-mirror active load `M3`/`M4`.
+- Do not leave `Vinp` or `Vinn` floating.
+- Do not swap `Vinp`/`Vinn` relative to `M1`/`M2`.
+- Do not place `Vout` at the diode-connected node; `Vout` must be the drain of `M2` and `M4`.
+- Do not forget PMOS bulks tied to `VDD` and NMOS bulks tied to their specified source/reference nodes.
+- Do not tie `M5` bulk to `Ntail`; it should be tied to `0`.
+- Avoid bias choices or device orientation errors that rail-clamp `Vout` or produce zero drain current in any MOSFET during `.op`.
+
+=== NORMALIZED SPEC ===
+final_filename: p18.cir
+
+Objective: implement a single-stage differential common-source opamp with inputs `Vinp` and `Vinn`, single-ended output `Vout`, 5 V supply, balanced DC bias at `Vinp=Vinn=2.5V`, and `.op` verification.
+
+Topology: NMOS differential pair `M1`/`M2` with a tail NMOS current source `M5`. Use PMOS current-mirror active load `M3`/`M4` per domain constraints, with `M3` diode-connected and `M4` mirroring current into the single-ended output branch. `Vout` is the high-impedance drain node of `M2` and `M4`.
+
+Required devices and interconnect:
+- `VDD` independent DC source from node `VDD` to `0`, value `5V`.
+- `Vinp` independent DC source from node `Vinp` to `0`, value `2.5V`.
+- `Vinn` independent DC source from node `Vinn` to `0`, value `2.5V`.
+- Tail bias source `Vbias` from node `Vbias_tail` to `0`, nominal `1.2V`.
+- `M1`: NMOS input transistor, drain at PMOS diode/mirror node `Nmirror`, gate `Vinp`, source `Ntail`, bulk tied to `Ntail`.
+- `M2`: NMOS input transistor, drain `Vout`, gate `Vinn`, source `Ntail`, bulk tied to `Ntail`.
+- `M3`: PMOS diode-connected load, source `VDD`, gate `Nmirror`, drain `Nmirror`, bulk tied to `VDD`.
+- `M4`: PMOS mirror load, source `VDD`, gate `Nmirror`, drain `Vout`, bulk tied to `VDD`.
+- `M5`: NMOS tail current source, drain `Ntail`, gate `Vbias_tail`, source `0`, bulk tied to `0`.
+
+Model assumptions:
+- NMOS model name `NMOS`, `VTO=0.7`, `KP=100u`.
+- PMOS model name `PMOS`, `VTO=-0.7`, `KP=50u`.
+- Use nominal sizing:
+  - NMOS `M1`, `M2`, `M5`: `W=50u`, `L=1u`.
+  - PMOS `M3`, `M4`: `W=100u`, `L=1u`.
+
+Biasing assumptions:
+- With `Vinp=Vinn=2.5V` and `Vbias_tail≈1.2V`, `M5` should conduct a real tail current and keep `Ntail` above ground with enough `VDS` headroom.
+- The tail current should split approximately evenly through `M1` and `M2`.
+- `M3` is diode-connected, establishing the PMOS mirror gate voltage.
+- `M4` sources mirrored current into `Vout`; `M2` sinks the corresponding branch current.
+- `Vout` should settle at a valid high-impedance operating point between ground and `VDD`, not rail-clamped.
+- All MOSFETs should have nonzero drain current at the DC operating point.
+
+Analysis:
+- Include `.op`.
+- The `.op` result should confirm active conduction in `M1` through `M5`, balanced branch currents at equal inputs, and a valid DC value on `Vout`.
+
+Output constraints:
+- The final netlist must include nodes `Vinp`, `Vinn`, and `Vout` exactly.
+- `Vinp` and `Vinn` must be explicitly driven by independent DC sources.
+- Do not leave any requested input node floating.
+- Do not use subcircuits or hidden bias sources beyond explicitly named independent sources.

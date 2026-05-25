@@ -1,0 +1,32 @@
+final_filename: p24.cir
+
+Objective: Create a single-supply inverting op-amp integrator using input node Vin and output node Vout. With Vin driven by a square wave and transient analysis `.tran 1u 10m`, Vout should produce an inverted integrated triangular waveform around a mid-supply reference.
+
+Topology: Use an inverting op-amp integrator. Connect resistor R1 from Vin to the op-amp inverting input. Connect capacitor Cf from Vout back to the inverting input. Bias the non-inverting input at a mid-supply reference node Vref = 2.5 V so the single-supply op-amp can integrate positive and negative deviations of Vin around Vref.
+
+Required devices:
+VDD supply: independent DC source from VDD to 0, value 5 V.
+Vin source: explicit independent PULSE or square-wave source connected from Vin to Vref, so Vin is electrically driven and swings around the virtual-ground reference.
+Vref generator: resistor divider from VDD to ground using two equal resistors, optionally bypassed with a capacitor to ground.
+R1: input resistor from Vin to the op-amp inverting input node, e.g. NINV.
+Cf: feedback capacitor from Vout to NINV.
+Op-amp: voltage-controlled voltage source or behavioral source modeling a high-gain op-amp powered conceptually from 0 to VDD. Non-inverting input connects to Vref, inverting input connects to NINV, output is Vout. Limit or clamp output behavior to stay within the 0 V to 5 V supply range if using a behavioral source.
+
+Biasing assumptions:
+Use VDD = 5 V.
+Use Vref = 2.5 V as the single-supply virtual ground.
+Vin should be a square wave centered on Vref, for example a PULSE from 2.0 V to 3.0 V or from Vref - 0.5 V to Vref + 0.5 V.
+The op-amp should have enough gain for NINV to remain close to Vref during operation.
+Choose R1 and Cf so the triangle slope is visible over 10 ms without saturating Vout. For example, R1 = 10 kOhm and Cf = 100 nF gives slope magnitude approximately `(Vin - Vref)/(R1*Cf)`.
+
+Analysis:
+Include `.tran 1u 10m`.
+Probe or print V(Vin) and V(Vout).
+Expected behavior: Vin is a square wave around 2.5 V. Vout ramps linearly downward when Vin is above Vref and ramps linearly upward when Vin is below Vref, forming an inverted triangular waveform centered near Vref, limited by the 0 V and 5 V supply rails.
+
+Output constraints:
+The final netlist must include node Vin exactly as the driven input node.
+The final netlist must include node Vout exactly as the integrator output node.
+Do not leave Vin floating.
+Do not replace Vout with an internal alias.
+No subcircuit placeholders should be used unless the op-amp model is fully defined in the same file.

@@ -1,0 +1,22 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "failure_family": "",
+  "repair_scope": "done",
+  "retryable": false,
+  "summary": "Low-frequency gain: 0.013953523620853659\nMid-band gain: 0.5952533309999999\nHigh-frequency gain: 0.002396912186968852\nPeak gain: -1.58 dB at 5.012e+03 Hz\nAverage stopband gain: -44.78 dB\nPeak boost: 43.20 dB",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Low-frequency gain: 0.013953523620853659\nMid-band gain: 0.5952533309999999\nHigh-frequency gain: 0.002396912186968852\nPeak gain: -1.58 dB at 5.012e+03 Hz\nAverage stopband gain: -44.78 dB\nPeak boost: 43.20 dB",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

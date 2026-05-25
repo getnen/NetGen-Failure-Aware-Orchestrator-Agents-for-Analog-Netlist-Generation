@@ -1,0 +1,121 @@
+You are the topology planning subagent for a SPICE generation framework.
+Create a concise circuit topology plan before SPICE is written.
+Do not write a full netlist. Describe the devices, node roles, bias strategy, feedback paths, and expected analysis behavior.
+Preserve requested port names exactly and call out topology risks that the netlist writer must avoid.
+Stay within primitive-device SPICE planning assumptions; do not suggest behavioral or controlled-source shortcuts unless the task explicitly requires them.
+
+=== TASK ===
+Type: Schmitt
+Description: A non-inverting Schmitt trigger with positive feedback op-map
+Inputs: Vin
+Outputs: Vout
+
+
+=== TASK-SPECIFIC PLANNING CONSTRAINTS ===
+- Plan a real comparator-like gain stage with explicit positive feedback to the non-inverting threshold node.
+- Keep the signal path primitive-device only; do not replace the hysteretic stage with behavioral or controlled-source shortcuts.
+- Preserve a clear reference or threshold node near mid-supply and make the output swing large enough to create distinct rising and falling trigger points.
+- Use one explicit threshold-summing node that receives the input signal, output feedback, and a stable reference path; do not leave the threshold node floating or anchored only through giant leak resistors.
+- Keep the threshold-node reference anchor in the same rough resistor scale as the input and feedback paths; avoid anchors that are orders of magnitude weaker than both, because they stop the threshold from being well-defined.
+- Make the decision core strong enough to regenerate a full output transition. Do not rely on a very weak diff pair, tiny tail bias, or excessively large resistive loads to create the switching action.
+- Prefer one decision stage plus at most a light output buffer. Avoid building the hysteresis core as a chain of CMOS inverters or pseudo-buffers between the threshold node and Vout.
+- Avoid output clamp diodes or overcomplicated rail-limited buffering that suppresses clean switching or collapses hysteresis.
+- The output stage should support two clearly separated switching thresholds, not just a tiny analog ripple around the threshold.
+=== NORMALIZED SPEC ===
+final_filename: p28.cir
+
+Objective:
+Implement a primitive-device non-inverting Schmitt trigger with explicit positive feedback, using an op-amp/comparator-style high-gain decision core rather than a behavioral source. The circuit must accept the named input node Vin and produce the named output node Vout. Vout should switch high when Vin rises above an upper threshold and switch low when Vin falls below a lower threshold, with a clear hysteresis window.
+
+Supply convention:
+Use a reasonable single-supply convention since rails were not specified:
+VDD = 5 V
+VSS = 0 V
+Use an explicit mid-supply reference VREF = 2.5 V as the stable anchor for single-supply operation and threshold centering.
+
+Recommended topology:
+Use one op-amp-like comparator stage built from primitive MOS devices, plus at most one light output stage.
+1. Input/threshold summing node:
+Create one explicit threshold node (for example VTH) fed by:
+Vin through Rin
+Vout through Rfb for positive feedback
+VREF through Rref as a low-impedance anchor comparable to the other two paths
+2. Decision stage:
+Compare VTH against a quiet reference input tied to VREF using a strong single-ended CMOS differential stage:
+NMOS differential pair
+PMOS current-mirror active load
+NMOS tail current source biased from an explicit current-bias branch
+This stage should provide decisive regeneration-free gain, not a weak linear ripple.
+3. Output stage:
+Use one light CMOS inverter or common-source output stage if needed so Vout swings close to the rails and can feed the feedback resistor cleanly. Avoid cascaded buffers.
+
+Behavioral intent:
+Make the overall behavior non-inverting: as Vin increases, Vout should eventually switch high; as Vin decreases, Vout should eventually switch low.
+The positive-feedback path from Vout back into the threshold node must shift the effective trip point depending on the present output state:
+When Vout is low, the circuit should require a higher Vin to switch high.
+When Vout is high, the circuit should require a lower Vin to switch low.
+This creates the hysteresis window.
+
+Device requirements:
+Primitive MOSFETs only.
+Use 4-terminal MOS devices and tie each bulk to its source unless the downstream expert chooses a process-constrained shared-well implementation explicitly.
+Required device groups:
+NMOS differential input pair
+PMOS current-mirror load pair
+One NMOS tail current source device
+Bias generator devices for the tail current
+Optional one CMOS inverter or light gain/output stage
+Three resistors for the threshold network: Rin, Rfb, Rref
+Independent voltage sources for VDD, VREF, and Vin
+
+Biasing assumptions:
+Center operation around VREF = 2.5 V.
+Choose modest starting resistor values so the reference anchor is not orders of magnitude weaker than the signal and feedback paths. A good starting point is:
+Rin = 100 kOhm
+Rfb = 330 kOhm
+Rref = 100 kOhm to 150 kOhm
+This gives a moderate hysteresis window while keeping the threshold node well anchored.
+Choose modest long-channel starting MOS sizes with threshold-aware overdrive, for example:
+Input NMOS pair and PMOS mirror: L about 0.5 um to 1 um, W sized for a few tens of microamps to low hundreds of microamps of branch current
+Tail source sized to keep the comparator in a clear high-gain region around VREF
+Optional output inverter only strong enough to restore rail swing and drive Rfb, not a heavy buffer
+The target is clean switching and measurable hysteresis, not precision linear amplification.
+
+Key interconnectivity:
+Vin must be driven by an explicit independent source in the final netlist.
+Vout must be the final named output node and must also feed back through Rfb to the threshold node.
+VREF must be explicit and stable; do not leave the threshold network referenced only through leakage or a very weak divider.
+The second comparator input should be tied to VREF so the threshold node crosses a defined reference.
+Do not leave Vin as a floating internal label; it must be the terminal of the stimulus source.
+
+Expected transfer behavior:
+With the suggested single-supply centering and resistor ratio, Vout should exhibit two distinct trip points around mid-supply.
+Using Rin about 100 kOhm and Rfb about 330 kOhm, the switching thresholds should land roughly near:
+Upper threshold about 3.2 V to 3.3 V on a rising Vin
+Lower threshold about 1.7 V to 1.8 V on a falling Vin
+Exact values will shift with finite gain and output swing, but the trend must hold: rising threshold higher than falling threshold.
+
+Required analyses:
+1. Operating-point analysis:
+Confirm the comparator bias currents and that the internal input pair remains in a valid region around VREF.
+2. Transient hysteresis demonstration:
+Drive Vin with an explicit slow triangular or PWL ramp, for example 0 V to 5 V to 0 V over a long enough interval for quasi-static switching.
+Verify that Vout switches sharply high on the upward ramp and sharply low on the downward ramp at different Vin values.
+3. Optional DC sweep:
+If the simulator flow supports separate forward and reverse sweeps, sweep Vin upward and downward to reveal the hysteresis loop directly.
+4. Measurements:
+Record the rising and falling switching points of Vin and report hysteresis width.
+
+Output constraints:
+The final netlist must include the exact nodes Vin and Vout.
+Vout should be a decisive digital-like output with clear high and low states under the chosen supply.
+The circuit should show real hysteresis from explicit positive feedback, not a behavioral comparator shortcut.
+
+
+=== OUTPUT CONTRACT ===
+- Topology summary
+- Device/function list
+- Bias/reference strategy
+- Signal or feedback path
+- SPICE/netlist constraints
+- Failure risks to avoid

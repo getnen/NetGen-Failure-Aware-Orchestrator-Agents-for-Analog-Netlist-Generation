@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019dee11-a56f-7882-a111-b1161c340794"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* Single-stage NMOS common-source amplifier with diode-connected PMOS load\nVDD VDD 0 DC 5\nVin Vin 0 DC 1.5 AC 1\nM1 Vout Vin 0 0 NMOS_MODEL W=50u L=1u\nM2 Vout Vout VDD VDD PMOS_MODEL W=100u L=1u\n.model NMOS_MODEL NMOS (VTO=0.7 KP=100u)\n.model PMOS_MODEL PMOS (VTO=-0.7 KP=50u)\n.op\n.ac dec 20 1 1e9\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":24651,"cached_input_tokens":21376,"output_tokens":361,"reasoning_output_tokens":224}}

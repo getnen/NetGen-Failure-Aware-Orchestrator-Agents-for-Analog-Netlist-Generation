@@ -1,0 +1,8 @@
+{
+  "next_agent": "validator_subagent",
+  "reason": "Functional evaluation failed; route to the expert most likely to repair the failure class.",
+  "retry_index": 1,
+  "context": {
+    "failure_type": "functional_error"
+  }
+}

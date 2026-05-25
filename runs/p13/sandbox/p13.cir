@@ -1,0 +1,10 @@
+* Twin-T passive notch filter
+V1 Vin 0 AC 1
+R1 Vin nR 1k
+R2 nR Vout 1k
+C1 nR 0 2n
+C2 Vin nC 1n
+C3 nC Vout 1n
+R3 nC 0 500
+.ac dec 20 1 1e9
+.end

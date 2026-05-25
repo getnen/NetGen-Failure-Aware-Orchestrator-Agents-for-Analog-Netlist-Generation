@@ -1,0 +1,52 @@
+You are the spec normalizer subagent for a SPICE generation framework.
+Convert the user task into an implementation-ready circuit brief for downstream experts.
+Preserve the requested behavior and exact node names. Return plain text only.
+
+=== DESIGN GUIDANCE ===
+Start from circuit functionality, name the required devices, describe the key interconnectivity, biasing assumptions, and the analysis required to verify the behavior. Preserve the requested input and output node names exactly. If the task does not specify supply rails, choose and document a reasonable supply convention rather than assuming one fixed benchmark rail. Every requested input node must be electrically driven by an explicit independent source or by the exact source requested by the task; do not leave named input nodes as floating internal nodes. For MOS circuits, connect bulk to source unless the process or task explicitly requires otherwise, use threshold-aware biasing, and prefer modest documented transistor sizing unless the task strongly suggests otherwise. Avoid placeholders, hidden assumptions, and benchmark-specific shortcuts.
+
+For complex or waveform-driven circuits, explicitly reason about the signal path, operating point, and why the chosen topology should produce the expected transfer function or waveform. State what waveform, gain trend, cutoff behavior, or switching behavior the circuit should show under the requested analysis. For comparator-, filter-, oscillator-, integrator-, differentiator-, mixer-, Schmitt-trigger-, and opamp-like tasks, include a virtual-ground or mid-supply reference when single-supply behavior requires it.
+
+Design the circuit so startup can occur from a realistic small asymmetry or noise source and the output node named Vout develops a visible periodic waveform. Keep internal high-gain input nodes explicit when the oscillator core depends on them for startup or bias stability. When the core is op-amp-like, prefer exact internal node names Vinp and Vinn so startup-sensitive evaluation can perturb the intended inputs directly.
+
+=== CIRCUIT TASK ===
+Task: Design A Wien Bridge oscillator
+Circuit Type: Oscillator
+Difficulty Level: Hard
+Input node(s): -
+Output node(s): Vout
+
+=== DOMAIN CONSTRAINTS ===
+VDD=5V. OpAmp or transistor gain stage with RC feedback network.
+MOSFET models: NMOS (Vth=0.7V), PMOS (Vth=-0.7V).
+Initialize startup-capable internal nodes when needed.
+Required analyses: .tran 1u 5m
+Output Vout must oscillate.
+
+=== PREVIOUS ATTEMPT FAILED: FIX THESE ISSUES ===
+Functional evaluation failed on retry 1.
+Failure type: functional_error
+Suggested next stage: validator_subagent
+
+Evaluator report:
+Output amplitude: 0.01999999875
+Output stddev: 0.005803901422349497
+Tail amplitude: 0.01005350052
+Tail stddev: 0.002902628378151204
+Dominant frequency: 99.4579494975295
+Dominant magnitude: 0.003200605957624073
+Peak count: 0
+Period variation: inf
+
+Evaluator-aware repair hint for Oscillator/VCO transient failure:
+- The direct transient evaluator inspected the steady-state half of the waveform and did not find stable periodic oscillation.
+- Treat low peak count, tiny tail amplitude, or infinite period variation as a startup or loop-gain problem: preserve explicit Vinp/Vinn and Vout nodes, keep the amplifier biased near mid-supply, and ensure the active stage can overcome the RC network loss.
+- For Wien-bridge loops, simplify toward a clean bridge around a real analog gain stage near mid-supply; avoid exotic complementary-input cores, commented-out devices, and hard clipping as the main startup mechanism.
+- If a ripple exists at Vout but periodicity never settles, the loop likely has the right rough frequency range but insufficient gain margin or incorrect feedback polarity.
+
+The last retry produced a highly similar netlist and the same failure type. Similarity=0.90. Force a topology-level redesign instead of minor value/name edits.
+
+=== OUTPUT CONTRACT ===
+- final_filename: p23.cir
+- state objective, topology, required devices, biasing assumptions, analyses, and output constraints
+- all nodes listed in input (-) and output (Vout) must appear in the final netlist

@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Amplifier
+Task: A common-drain amplifier (a.k.a. a source follower) with resistive load R (output Vout at the source)

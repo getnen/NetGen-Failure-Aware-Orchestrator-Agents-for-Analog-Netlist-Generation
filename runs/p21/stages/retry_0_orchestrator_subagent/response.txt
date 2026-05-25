@@ -1,0 +1,8 @@
+{
+  "next_agent": "spec_normalizer_subagent",
+  "reason": "Start from a normalized circuit brief so downstream experts share one contract.",
+  "retry_index": 0,
+  "context": {
+    "has_previous_errors": false
+  }
+}

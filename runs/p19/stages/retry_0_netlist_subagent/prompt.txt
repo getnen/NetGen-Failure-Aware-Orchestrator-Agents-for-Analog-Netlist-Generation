@@ -1,0 +1,151 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p19.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For Mixer tasks, include placeholder independent sources named exactly Vrfp, Vrfn, Vlop, and Vlon, but do not rely on their amplitudes for evaluation because the checker replaces them. Bias and size the NMOS Gilbert cell for the injected conditions: RF gates around 2.0 V, LO gates at the checker-selected common-mode plus/minus 0.1 V, VDD=5 V, and differential outputs Voutp/Voutn with enough load conversion gain. Avoid a weak 200 uA / 50u-only design if it leaves Best Vlop near 0 V or FFT products below 1 mV; increase effective gm, tail current, or device width and choose loads/common-mode so the LO quad actually switches above VTO=0.7 V.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a flat, single-supply, stacked NMOS Gilbert cell mixer. The bottom NMOS RF differential pair converts `Vrfp - Vrfn` into differential currents at `rf_drp` and `rf_drn`. The upper NMOS LO switching quad steers those RF currents into either `Voutp` or `Voutn` depending on `Vlop - Vlon`. Two `10 kOhm` resistive loads from `VDD = 5 V` to `Voutp` and `Voutn` convert the commutated currents into a differential output voltage.
+
+Expected behavior:
+
+`Voutp - Voutn ∝ (Vrfp - Vrfn) × (Vlop - Vlon)`
+
+With nominal 1 kHz RF and 1.2 kHz LO drives, transient analysis should show differential tones near `200 Hz` and `2.2 kHz`.
+
+**Device/Function List**
+
+- `Mtail`: NMOS tail current source
+  - Drain: `rf_tail`
+  - Source: `tail_src`
+  - Gate: `Vbias_tail`
+  - Bulk: `tail_src`
+  - `tail_src` should be tied to ground or used as the grounded source node.
+
+- `Mrfp`: RF positive input transconductor
+  - Gate: `Vrfp`
+  - Drain: `rf_drp`
+  - Source/bulk: `rf_tail`
+
+- `Mrfn`: RF negative input transconductor
+  - Gate: `Vrfn`
+  - Drain: `rf_drn`
+  - Source/bulk: `rf_tail`
+
+- `Mlo1`: LO switch steering `rf_drp` current to `Voutp`
+  - Drain: `Voutp`
+  - Source/bulk: `rf_drp`
+  - Gate: `Vlop`
+
+- `Mlo2`: LO switch steering `rf_drp` current to `Voutn`
+  - Drain: `Voutn`
+  - Source/bulk: `rf_drp`
+  - Gate: `Vlon`
+
+- `Mlo3`: LO switch steering `rf_drn` current to `Voutn`
+  - Drain: `Voutn`
+  - Source/bulk: `rf_drn`
+  - Gate: `Vlop`
+
+- `Mlo4`: LO switch steering `rf_drn` current to `Voutp`
+  - Drain: `Voutp`
+  - Source/bulk: `rf_drn`
+  - Gate: `Vlon`
+
+- `Rloadp`: `10 kOhm` from `VDD` to `Voutp`
+- `Rloadn`: `10 kOhm` from `VDD` to `Voutn`
+
+**Bias/Reference Strategy**
+
+Use `VDD = 5 V`.
+
+Bias the RF input sources around approximately `2.0 V` common mode with small opposite-phase 1 kHz signals. This keeps the RF pair on without overdriving the stacked devices.
+
+Bias the LO inputs around a common mode high enough to switch the upper quad, likely around `3 V` to `4 V`, with opposite-phase 1.2 kHz signals. The LO amplitude should be large enough to alternate conduction between the cross-coupled switch pairs.
+
+Set `Vbias_tail` around `1.1 V` to `1.3 V` for the given NMOS model:
+
+`.model NMOS NMOS (VTO=0.7 KP=100u)`
+
+This should create moderate tail current while avoiding output saturation. With `10 kOhm` loads, choose the tail current so `Voutp` and `Voutn` sit near mid-supply, not pinned to `5 V` or ground.
+
+Tie every NMOS bulk to its local source node as specified.
+
+**Signal or Feedback Path**
+
+There is no stabilizing feedback loop. This is an open-loop switching transconductance mixer.
+
+Signal flow:
+
+`Vrfp - Vrfn` drives the lower differential pair, producing opposite drain currents at `rf_drp` and `rf_drn`.
+
+`Vlop - Vlon` drives the upper quad, commutating those RF currents into `Voutp` and `Voutn`.
+
+The resistive loads convert current steering into voltage swings. The cross-connected LO devices invert the output polarity on alternate LO phases, creating the multiplication action.
+
+**SPICE/Netlist Constraints**
+
+The final file should be named `p19.cir`.
+
+The final netlist must be flat: no subcircuits, no behavioral multiplier, no hidden controlled-source shortcut.
+
+Required exact external node names:
+
+- Inputs: `Vrfp`, `Vrfn`, `Vlop`, `Vlon`
+- Outputs: `Voutp`, `Voutn`
+
+The netlist must include independent voltage sources explicitly connected to `Vrfp`, `Vrfn`, `Vlop`, and `Vlon`, even if the checker later replaces them.
+
+Include:
+
+- `VDD` source fixed at `5 V`
+- `Vbias_tail` source
+- Two `10 kOhm` loads
+- NMOS model with `Vth/VTO = 0.7 V`, `KP = 100u`, `W = 50u`, `L = 1u`
+- `.tran 1u 5m`
+
+**Failure Risks To Avoid**
+
+- Do not omit explicit RF/LO voltage sources; the checker expects the ports to exist.
+- Do not rename ports. Preserve `Vrfp`, `Vrfn`, `Vlop`, `Vlon`, `Voutp`, `Voutn` exactly.
+- Do not accidentally connect the LO quad in a non-crossed pattern; wrong commutation polarity will suppress the desired differential product.
+- Do not let `Voutp` and `Voutn` rail at `VDD` from too little current or collapse near ground from too much tail current.
+- Do not choose LO common mode too low; the upper NMOS switches need enough gate voltage above `rf_drp/rf_drn`.
+- Do not leave NMOS bulks floating or tied globally to ground when the spec requires source-tied bulks.
+- Do not use PMOS loads, active loads, subcircuits, or behavioral multiplication; the requested topology is resistively loaded NMOS Gilbert cell.
+
+=== NORMALIZED SPEC ===
+final_filename: p19.cir
+
+Objective: create a single-supply NMOS Gilbert cell mixer where the differential output voltage Voutp - Voutn is proportional to the product of the differential RF input Vrfp - Vrfn and the differential LO input Vlop - Vlon. The expected transient waveform should contain differential mixing products at the sum and difference frequencies of the checker-driven inputs, especially near 200 Hz and 2.2 kHz, with both products above 1 mV when measured from Voutp - Voutn.
+
+Topology: use a classic stacked NMOS Gilbert cell with a bottom differential RF transconductance pair, an upper LO switching quad, two 10 kOhm resistive loads to VDD, and an NMOS tail current source. VDD must be 5 V. The RF pair converts Vrfp - Vrfn into differential drain currents. The LO quad commutates those RF currents between the two load resistors so the output current polarity follows Vlop - Vlon, producing multiplication in the differential output.
+
+Required devices:
+Mtail: NMOS tail current source from source node tail_src to ground, drain at rf_tail, gate driven by a fixed bias Vbias_tail.
+Mrfp: NMOS RF input transistor with gate Vrfp, drain rf_drp, source rf_tail, bulk tied to source rf_tail.
+Mrfn: NMOS RF input transistor with gate Vrfn, drain rf_drn, source rf_tail, bulk tied to source rf_tail.
+Mlo1: NMOS LO switch from Voutp to rf_drp, gate Vlop, bulk tied to source rf_drp.
+Mlo2: NMOS LO switch from Voutn to rf_drp, gate Vlon, bulk tied to source rf_drp.
+Mlo3: NMOS LO switch from Voutn to rf_drn, gate Vlop, bulk tied to source rf_drn.
+Mlo4: NMOS LO switch from Voutp to rf_drn, gate Vlon, bulk tied to source rf_drn.
+Rloadp: 10 kOhm from VDD to Voutp.
+Rloadn: 10 kOhm from VDD to Voutn.
+Independent sources must explicitly drive Vrfp, Vrfn, Vlop, and Vlon in the final netlist, even though the checker may detach and replace them. Include VDD and Vbias_tail sources. Use the specified NMOS model: Vth=0.7 V, kp=100u, W=50u, L=1u.
+
+Biasing assumptions: all NMOS bulks are tied to their local source nodes. The checker injects RF and LO signals around common-mode voltages, so the circuit must not depend on floating inputs. Choose nominal DC source definitions compatible with the task: Vrfp and Vrfn centered near 2.0 V with small opposite-phase 1 kHz signals; Vlop and Vlon centered around a LO common-mode suitable for switching, with opposite-phase 1.2 kHz signals. Tail bias should be threshold-aware, for example around 1.1 V to 1.3 V, so the tail source supplies moderate current without forcing the outputs to rails. The 10 kOhm loads should bias Voutp and Voutn near mid-supply for a useful LO common-mode sweep, leaving enough headroom for the stacked RF pair and LO quad.
+
+Analysis: include `.tran 1u 5m`. The transient result should show Voutp and Voutn moving differentially around a mid-supply operating point rather than being stuck at VDD or ground. Verification should inspect `V(Voutp)-V(Voutn)` and confirm FFT content at the expected difference and sum frequencies: |1.2 kHz - 1 kHz| = 200 Hz and 1.2 kHz + 1 kHz = 2.2 kHz.
+
+Output constraints: the final netlist must contain the exact input node names Vrfp, Vrfn, Vlop, Vlon and exact output node names Voutp, Voutn. It must be a flat SPICE netlist with explicit devices and sources, no subcircuits or hidden placeholders.

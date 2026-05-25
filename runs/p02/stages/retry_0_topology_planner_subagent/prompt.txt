@@ -1,0 +1,47 @@
+You are the topology planning subagent for a SPICE generation framework.
+Create a concise circuit topology plan before SPICE is written.
+Do not write a full netlist. Describe the devices, node roles, bias strategy, feedback paths, and expected analysis behavior.
+Preserve requested port names exactly and call out topology risks that the netlist writer must avoid.
+
+=== TASK ===
+Type: Amplifier
+Description: A three-stage amplifier with single input and output (each stage is common-source with resistive load)
+Inputs: Vin
+Outputs: Vout
+
+=== NORMALIZED SPEC ===
+final_filename: p2.cir
+
+Objective: Implement a three-stage NMOS common-source voltage amplifier with one externally driven input node `Vin` and one final output node `Vout`. The circuit should run from `VDD = 5 V` and support `.op` and `.ac dec 20 1 1e9` analyses.
+
+Topology: Use three cascaded common-source stages. Each stage has an NMOS transistor with its source tied to ground, bulk tied to source, drain connected to `VDD` through a resistive load, and gate driven by the previous stage output. Stage 1 gate is driven by `Vin`; stage 3 drain is `Vout`.
+
+Required devices:
+VDD independent DC supply from node `VDD` to ground, value 5 V.
+Input source connected to exact node `Vin`, using a DC bias of at least 1.2 V and an AC magnitude such as 1 V for small-signal gain measurement.
+Three NMOS transistors using model `NMOS` with W=50u and L=1u:
+M1 drain `n1`, gate `Vin`, source `0`, bulk `0`.
+M2 drain `n2`, gate `n1`, source `0`, bulk `0`.
+M3 drain `Vout`, gate `n2`, source `0`, bulk `0`.
+Three drain load resistors from `VDD` to each drain, each between 10k and 100k ohm. A nominal value such as 47k is suitable:
+R1 from `VDD` to `n1`.
+R2 from `VDD` to `n2`.
+R3 from `VDD` to `Vout`.
+
+Biasing assumptions: `Vin` must be electrically driven by an explicit independent voltage source, not left floating. Use `Vin` DC around 1.5 V to exceed the required NMOS gate bias threshold condition while allowing common-source operation. Intermediate nodes `n1` and `n2` are DC-coupled into the following gates; verify with `.op` that M2 and M3 gate voltages remain high enough for conduction and that all drain nodes avoid rail saturation as much as possible.
+
+Analyses:
+Include `.op`.
+Include `.ac dec 20 1 1e9`.
+Input source should include `AC 1` so voltage gain can be read directly as `V(Vout)/V(Vin)`.
+
+Output constraints: The final SPICE netlist must contain exact nodes `Vin` and `Vout`. `Vin` must be the circuit input source node. `Vout` must be the drain/output node of the third common-source stage. No subcircuits or placeholder devices should be used.
+
+
+=== OUTPUT CONTRACT ===
+- Topology summary
+- Device/function list
+- Bias/reference strategy
+- Signal or feedback path
+- SPICE/netlist constraints
+- Failure risks to avoid

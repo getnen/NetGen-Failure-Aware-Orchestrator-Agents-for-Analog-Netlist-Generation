@@ -1,0 +1,56 @@
+You are the topology planning subagent for a SPICE generation framework.
+Create a concise circuit topology plan before SPICE is written.
+Do not write a full netlist. Describe the devices, node roles, bias strategy, feedback paths, and expected analysis behavior.
+Preserve requested port names exactly and call out topology risks that the netlist writer must avoid.
+Stay within primitive-device SPICE planning assumptions; do not suggest behavioral or controlled-source shortcuts unless the task explicitly requires them.
+
+=== TASK ===
+Type: Subtractor
+Description: An Op-amp subtractor to make Vout=Vin2-Vin1
+Inputs: Vin1, Vin2
+Outputs: Vout
+
+=== NORMALIZED SPEC ===
+final_filename: p27.cir
+
+Objective: Create a single-supply op-amp subtractor whose output node `Vout` implements `Vout = Vin2 - Vin1` using the exact input node names `Vin1` and `Vin2`.
+
+Topology: Use a classic differential amplifier/subtractor made from one ideal op amp and four equal resistors. Connect `Vin1` to the inverting input through resistor R1, and connect feedback resistor R2 from `Vout` to the inverting input. Connect `Vin2` to the non-inverting input through resistor R3, and connect resistor R4 from the non-inverting input to ground. Set R1 = R2 = R3 = R4 so the differential gain is unity and the common-mode terms cancel, producing `Vout = Vin2 - Vin1`.
+
+Required devices:
+- One op amp element modeled as a high-gain voltage-controlled voltage source or equivalent ideal op amp.
+- Four equal resistors, nominally 10 kOhm each:
+  - R1: `Vin1` to inverting summing node
+  - R2: `Vout` to inverting summing node
+  - R3: `Vin2` to non-inverting reference node
+  - R4: non-inverting reference node to ground
+- Independent voltage sources explicitly driving `Vin1` and `Vin2`.
+- A 5 V supply source defining `VDD`.
+
+Biasing assumptions:
+- Use `VDD = 5 V`.
+- Ground node is 0 V.
+- Since the requested transfer `Vout = Vin2 - Vin1` is not level-shifted, choose DC input values for `.op` that keep `Vout` within the valid single-supply range, for example `Vin2 > Vin1` and both inputs between 0 V and 5 V.
+- A suitable operating-point test is `Vin1 = 1 V`, `Vin2 = 3 V`, expecting `Vout = 2 V`.
+- The op amp should be powered from `VDD` and ground if using a supply-aware model. If using an ideal controlled source, ensure its output is referenced to ground and drives node `Vout`.
+
+Analyses:
+- Include `.op`.
+- The `.op` result should report DC node voltages at `Vin1`, `Vin2`, and `Vout`.
+- Expected `.op` behavior for the suggested bias is `V(Vout) = V(Vin2) - V(Vin1) = 2 V`.
+
+Output constraints:
+- The final netlist must be named `p27.cir`.
+- The netlist must contain nodes `Vin1`, `Vin2`, and `Vout` exactly as written.
+- Both `Vin1` and `Vin2` must be explicitly driven by independent voltage sources.
+- Do not leave input nodes floating.
+- Do not use subcircuits or hidden placeholder models.
+
+
+=== OUTPUT CONTRACT ===
+- Topology summary
+- Device/function list
+- Bias/reference strategy
+- Signal or feedback path
+- SPICE/netlist constraints
+- Failure risks to avoid

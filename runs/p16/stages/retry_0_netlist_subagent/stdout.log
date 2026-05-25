@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019dee14-f2f3-7b02-bef9-7cbd4336be81"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* 5V CMOS differential opamp core with PMOS current mirror load\nVDD VDD 0 DC 5\nVinp_src Vinp 0 DC 2.5 AC 1\nVinn_src Vinn 0 DC 2.5 AC 0\nVbias_src Vbias 0 DC 1.2\n\nM1 Voutp Vinp tail tail NMOS W=50u L=1u\nM2 Vout Vinn tail tail NMOS W=50u L=1u\nM3 Voutp Voutp VDD VDD PMOS W=100u L=1u\nM4 Vout Voutp VDD VDD PMOS W=100u L=1u\nM5 tail Vbias 0 0 NMOS W=50u L=1u\n\nRoutp_leak Voutp 0 1G\nRout_leak Vout 0 1G\n\n.model NMOS NMOS (LEVEL=1 VTO=0.7 KP=100u LAMBDA=0.02)\n.model PMOS PMOS (LEVEL=1 VTO=-0.7 KP=50u LAMBDA=0.02)\n\n.op\n.ac dec 20 1 1Meg\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":25089,"cached_input_tokens":21376,"output_tokens":790,"reasoning_output_tokens":516}}

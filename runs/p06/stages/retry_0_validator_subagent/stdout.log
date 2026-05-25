@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019de910-8e0c-7c32-8f5c-e1d52c9db65f"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* CMOS inverter\nVDD VDD 0 DC 5\nVin Vin 0 DC 0\nM1 Vout Vin 0 0 NMOS W=10u L=1u\nM2 Vout Vin VDD VDD PMOS W=20u L=1u\n.model NMOS NMOS (LEVEL=1 VTO=0.7 KP=200u LAMBDA=0.02)\n.model PMOS PMOS (LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02)\n.dc Vin 0 5 0.1\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":23331,"cached_input_tokens":4480,"output_tokens":205,"reasoning_output_tokens":71}}

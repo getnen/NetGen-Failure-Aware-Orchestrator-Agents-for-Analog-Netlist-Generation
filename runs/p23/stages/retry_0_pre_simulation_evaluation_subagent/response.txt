@@ -1,0 +1,9 @@
+{
+  "status": "needs_repair",
+  "syntax_issues": [],
+  "topology_issues": [
+    "missing_explicit_mid_supply_reference_source"
+  ],
+  "repair_focus": "General oscillator/VCO repair focus: preserve startup-capable internal nodes, include an explicit mid-supply reference source, maintain correct feedback polarity, give the active stage enough loop gain to overcome passive losses, and avoid output rail clamps or behavioral/controlled-source shortcuts that suppress analog startup. For Wien-bridge structures, keep a clean bridge from Vout to the non-inverting side and avoid hard clamp/inverter behavior. Add a real mid-supply reference source for single-supply oscillators and tie feedback/bias networks to it.",
+  "recommended_next_agent": "validator_subagent"
+}

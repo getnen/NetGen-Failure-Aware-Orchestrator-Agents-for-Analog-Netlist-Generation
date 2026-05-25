@@ -1,0 +1,48 @@
+**Topology Summary**
+Single-stage NMOS common-gate amplifier. Use one NMOS `M1` with drain at `Vout`, source at `Vin`, gate at `Vbias`, and bulk tied to `Vin`. A resistor `Rload` connects from `VDD` to `Vout`, forming the drain load. Supply is `VDD = 5 V` referenced to ground node `0`.
+
+**Device/Function List**
+- `M1`: NMOS amplifying device, common-gate configuration.
+  - Drain: `Vout`
+  - Gate: `Vbias`
+  - Source: `Vin`
+  - Bulk: `Vin`
+  - Model target: `Vth=0.7V`, `kp=100u`, `W=50u`, `L=1u`
+- `Rload`: resistive drain load from `VDD` to `Vout`, nominal `47k`, allowed `10k-100k`.
+- `VDD`: independent DC voltage source from `VDD` to `0`, value `5 V`.
+- `Vbias`: independent DC gate-bias source from `Vbias` to `0`, preferably around `1.8 V`.
+- `Vin`: independent input voltage source from `Vin` to `0`, with DC bias around `0.8 V` and `AC 1`.
+
+**Bias/Reference Strategy**
+Set `Vbias` above threshold relative to `Vin`, for example `Vbias = 1.8 V` and `Vin DC = 0.8 V`, giving `VGS = 1.0 V` and overdrive near `0.3 V`. Choose `Rload = 47k` as the nominal load. The expected operating point should keep `Vout` high enough for saturation:
+
+`VDS >= VGS - Vth`
+
+Since `VDS = Vout - Vin`, avoid biasing or load current choices that pull `Vout` too close to `Vin`.
+
+**Signal or Feedback Path**
+Input signal is applied directly at the source node `Vin`. Gate node `Vbias` is AC-grounded through its independent DC bias source unless otherwise specified by the simulator. Small-signal current variations through `M1` are converted to output voltage by `Rload` at `Vout`.
+
+No intentional feedback network is required. The common-gate behavior provides a low input impedance at `Vin` and non-inverting voltage gain from `Vin` to `Vout` under proper bias.
+
+**SPICE/Netlist Constraints**
+- Final file should be `p4.cir`.
+- Preserve exact node names: `Vin`, `Vbias`, `Vout`.
+- `Vin` must be driven by an explicit independent voltage source connected from `Vin` to `0`.
+- `Vbias` must be driven by an explicit independent voltage source connected from `Vbias` to `0`.
+- `Vout` must be the drain of `M1`.
+- `Rload` must connect from `VDD` to `Vout`.
+- Bulk of `M1` must connect to `Vin`, not `0`.
+- Include `.op`.
+- Include `.ac dec 20 1 1e9`.
+- Set the input source as `AC 1` so `Vout` directly reports small-signal gain.
+- Do not use subcircuits or placeholder devices.
+
+**Failure Risks To Avoid**
+- Do not apply `Vin` at the gate; this must be common-gate, with signal at the source.
+- Do not tie NMOS bulk to ground; it must be tied to `Vin`.
+- Do not omit the explicit `Vin` voltage source.
+- Do not leave `Vbias` floating or replace it with a parameter only.
+- Do not choose `Vin DC` too close to or above `Vbias - Vth`, or `M1` may be off.
+- Do not choose a load/bias point that pulls `Vout` below the saturation requirement.
+- Do not rename required ports, especially `Vin`, `Vbias`, and `Vout`.

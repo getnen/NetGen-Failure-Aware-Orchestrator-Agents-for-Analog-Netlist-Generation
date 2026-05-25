@@ -1,0 +1,4 @@
+{"type": "thread.started", "thread_id": "019dfc74-22be-72b1-86d2-95d34d6f5b8d"}
+{"type": "turn.started"}
+{"type": "item.completed", "item": {"id": "item_0", "type": "agent_message", "text": "* 5 V CMOS inverter\nVDD VDD 0 DC 5\nVin Vin 0 DC 0\nMn1 Vout Vin 0 0 NMOS W=10u L=1u\nMp1 Vout Vin VDD VDD PMOS W=10u L=1u\n.model NMOS NMOS (LEVEL=1 VTO=0.7 KP=100u)\n.model PMOS PMOS (LEVEL=1 VTO=-0.7 KP=50u)\n.dc Vin 0 5 0.1\n.end"}}
+{"type": "turn.completed", "usage": {"input_tokens": 14643, "cached_input_tokens": 11648, "output_tokens": 280, "reasoning_output_tokens": 157}}

@@ -1,0 +1,72 @@
+You are the validator/fixer subagent.
+Repair syntax issues in this SPICE netlist if needed.
+Return ONLY corrected netlist text.
+Keep behavior equivalent when possible.
+Keep the circuit in primitive-device ngspice form only: R, C, L, V, I, D, Q, M, X where needed.
+Do not introduce behavioral or controlled sources such as B, E, F, G, or H elements.
+Do not keep .step, .alter, or .control sweep/testbench directives; return one runnable ngspice netlist at a single nominal operating point.
+Do not keep commented-out placeholder elements if their internal nodes are still referenced by active devices.
+If a helper node is used later in the circuit, make sure an active stage generates it, or remove the downstream references.
+Ensure there is one .end at the end.
+
+=== NETLIST TO VALIDATE ===
+* Primitive-device non-inverting CMOS Schmitt trigger with explicit VTH summing node
+VDD VDD 0 5
+VREF VREF 0 2.5
+Vin Vin 0 PWL(0m 0 5m 0 10m 5 15m 5 20m 0 25m 0)
+
+Rin Vin VTH 100k
+Rfb Vout VTH 330k
+Rref VREF VTH 120k
+
+Ibias VDD NBIAS 20u
+MNB NBIAS NBIAS 0 0 NMOS L=1u W=20u
+MTAIL NTAIL NBIAS 0 0 NMOS L=1u W=20u
+
+MINP N1 VTH NTAIL 0 NMOS L=1u W=30u
+MREF N2 VREF NTAIL 0 NMOS L=1u W=30u
+
+MP1 N1 N1 VDD VDD PMOS L=1u W=60u
+MP2 N2 N1 VDD VDD PMOS L=1u W=60u
+
+MNOUT NINT N2 0 0 NMOS L=1u W=40u
+MPOUT NINT N2 VDD VDD PMOS L=1u W=80u
+
+MNBUF Vout NINT 0 0 NMOS L=0.8u W=20u
+MPBUF Vout NINT VDD VDD PMOS L=0.8u W=40u
+Cload Vout 0 20f
+
+.model NMOS NMOS (LEVEL=1 VTO=0.75 KP=220u LAMBDA=0.03 GAMMA=0.45 PHI=0.7)
+.model PMOS PMOS (LEVEL=1 VTO=-0.75 KP=90u LAMBDA=0.03 GAMMA=0.45 PHI=0.7)
+
+.op
+.tran 0.02m 25m uic
+.dc Vin 0 5 0.01
+.meas tran T_RISE WHEN V(Vout)=2.5 RISE=1
+.meas tran VIN_RISE FIND V(Vin) AT=T_RISE
+.meas tran T_FALL WHEN V(Vout)=2.5 FALL=1
+.meas tran VIN_FALL FIND V(Vin) AT=T_FALL
+.meas tran HYST PARAM='VIN_RISE-VIN_FALL'
+
+.end
+
+
+=== VALIDATOR SCOPE ===
+Assume the current architecture should be preserved unless the prompt explicitly says a topology-level redesign is required.
+Prioritize local repairs: biasing, reference anchoring, device polarity corrections, feedback polarity corrections, resistor/capacitor ratios, convergence support, and missing node hookups.
+Do not add extra gain stages, output buffers, inverter chains, or new internal sub-blocks unless the prompt clearly identifies the current architecture as unsalvageable.
+Preserve explicit functional paths already present in the design brief or repair guidance: signal-input path, feedback path, reference/bias path, and the main decision or gain path.
+Do not 'repair' a circuit by bypassing a named summing, threshold, or high-impedance gain node that the architecture depends on.
+When the guidance names a required node role such as a threshold, summing, reference, or feedback node, keep that role explicit instead of collapsing it into a transistor gate with missing surrounding paths.
+
+=== REPAIR GUIDANCE ===
+The previous attempt was evaluated functionally, not just syntactically. Repair the circuit so the measured behavior matches the task intent. If the evaluator reports topology-level failure, change the topology rather than only tweaking values. If a required input node appears only as an internal node, add the missing independent source. If the evaluator reports the same failure repeatedly, avoid regenerating the identical circuit.
+
+Use evaluator feedback as a design-debug signal. If the report says the circuit is not functioning correctly, identify the missing functional mechanism: biasing, load choice, feedback polarity, reference level, insufficient gain, or absent frequency-selective element. For waveform tasks, repair the netlist so the requested waveform or response is visible in the configured analysis rather than merely producing a valid operating point.
+
+=== TOPOLOGY ISSUES DETECTED BEFORE SIMULATION ===
+- multi_stage_cmos_output_chain_after_decision_core
+Repair the topology before returning the netlist.
+
+=== REPAIR FOCUS ===
+General Schmitt-trigger repair focus: preserve explicit positive feedback into a distinct threshold node, keep a strong comparator-like primitive-device gain stage, anchor the threshold node to a real reference path, and avoid output clamp devices or weak pseudo-analog buffering that prevents full output switching and measurable hysteresis. Keep the threshold-node reference anchor in the same rough scale as the input and feedback paths, and avoid very weakly biased resistive-load decision cores that cannot regenerate a full transition.

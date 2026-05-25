@@ -1,0 +1,42 @@
+* Single-supply transistor-level Wien bridge oscillator
+VDD vdd 0 DC 5
+Rmid_top vdd Vmid 100k
+Rmid_bot Vmid 0 100k
+Cmid Vmid 0 1u
+
+Cw1 Vout nwien 10n
+Rw1 nwien Vinp 10k
+Rw2 Vinp Vmid 10k
+Cw2 Vinp Vmid 10n
+
+Rf1 Vout nfb 12k
+Rf2 nfb Vinn 11k
+Rg Vinn Vmid 10k
+Dlim1 nfb Vinn DLIM
+Dlim2 Vinn nfb DLIM
+
+Rb1 vdd nbias 470k
+Rb2 nbias 0 180k
+Rtail ntail 0 8.2k
+Mtail ntail nbias 0 0 NMOS W=80u L=1u
+
+M1 nleft Vinp ntail ntail NMOS W=120u L=1u
+M2 nright Vinn ntail ntail NMOS W=120u L=1u
+M3 nleft nleft vdd vdd PMOS W=240u L=1u
+M4 nright nleft vdd vdd PMOS W=240u L=1u
+
+M5 gain nright 0 0 NMOS W=180u L=1u
+R5 vdd gain 18k
+M6 Vout gain vdd vdd PMOS W=700u L=1u
+M7 Vout nbias 0 0 NMOS W=260u L=1u
+Rload Vout Vmid 47k
+Cload Vout 0 20p
+
+.ic V(Vinp)=2.51 V(Vinn)=2.49 V(Vout)=2.5 V(nright)=2.8 V(gain)=2.2
+
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=250u LAMBDA=0.02
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02
+.model DLIM D IS=1e-15 N=1.8 RS=50 CJO=0.2p
+
+.tran 1u 5m
+.end

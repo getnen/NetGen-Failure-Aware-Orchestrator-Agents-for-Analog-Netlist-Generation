@@ -1,0 +1,89 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p2.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+Three cascaded NMOS common-source voltage-gain stages, all powered from `VDD = 5 V`. Each stage uses a grounded-source NMOS with a drain resistor to `VDD`. The first gate is driven by the external input node `Vin`; the third drain is the external output node `Vout`.
+
+Internal stage outputs:
+- Stage 1 drain: `n1`
+- Stage 2 drain: `n2`
+- Stage 3 drain: `Vout`
+
+**Device/Function List**
+- `VDD` supply: independent DC source from `VDD` to `0`, value `5 V`.
+- Input source: independent voltage source driving exact node `Vin` relative to `0`, with DC bias around `1.5 V` and `AC 1`.
+- `M1`: NMOS common-source input stage, drain `n1`, gate `Vin`, source `0`, bulk `0`, model `NMOS`, `W=50u`, `L=1u`.
+- `M2`: NMOS second gain stage, drain `n2`, gate `n1`, source `0`, bulk `0`, model `NMOS`, `W=50u`, `L=1u`.
+- `M3`: NMOS third gain/output stage, drain `Vout`, gate `n2`, source `0`, bulk `0`, model `NMOS`, `W=50u`, `L=1u`.
+- `R1`: resistive drain load from `VDD` to `n1`, nominally `47k`.
+- `R2`: resistive drain load from `VDD` to `n2`, nominally `47k`.
+- `R3`: resistive drain load from `VDD` to `Vout`, nominally `47k`.
+
+**Bias/Reference Strategy**
+Use ground node `0` as the only reference. Tie all NMOS sources and bulks directly to `0`. Bias `Vin` with an explicit voltage source at approximately `1.5 V` DC so `M1` is on and `.ac` has a valid operating point.
+
+Because stages are DC-coupled, `n1` biases the gate of `M2`, and `n2` biases the gate of `M3`. The netlist writer should expect `.op` to determine whether all three stages conduct. Drain voltages should ideally remain away from both `0 V` and `5 V`, but this simple DC-coupled three-stage chain may bias unevenly depending on the `NMOS` model.
+
+**Signal or Feedback Path**
+Signal path is strictly feed-forward:
+
+`Vin -> M1 gate -> n1 -> M2 gate -> n2 -> M3 gate -> Vout`
+
+Each common-source stage inverts, so three stages produce an overall inverting gain from `Vin` to `Vout`. There is no intentional global or local feedback path other than intrinsic MOS capacitances and device parasitics from the model.
+
+**SPICE/Netlist Constraints**
+- Preserve exact external node names: `Vin` and `Vout`.
+- `Vin` must be driven by an explicit independent source and must include `AC 1`.
+- `Vout` must be the drain of `M3`.
+- Use model name exactly `NMOS`.
+- Use three discrete NMOS devices, not subcircuits.
+- Include `.op`.
+- Include `.ac dec 20 1 1e9`.
+- Drain load resistors should be between `10k` and `100k`; `47k` is the preferred nominal value.
+- Do not leave `Vin`, `n1`, `n2`, or `Vout` floating.
+
+**Failure Risks To Avoid**
+- Do not AC-couple stages; the requested topology is DC-coupled.
+- Do not omit the DC value on the input source, or `.op` may bias the chain off.
+- Do not omit `AC 1`, or AC gain extraction will be inconvenient or invalid.
+- Do not swap source/drain/bulk ordering on MOS devices.
+- Do not tie intermediate drains directly to gates without their drain resistors to `VDD`.
+- Do not rename `Vin` or `Vout`.
+- Watch for poor DC bias propagation: if `n1` or `n2` sits too low, later stages may turn off; if too high, later drains may collapse near ground.
+
+=== NORMALIZED SPEC ===
+final_filename: p2.cir
+
+Objective: Implement a three-stage NMOS common-source voltage amplifier with one externally driven input node `Vin` and one final output node `Vout`. The circuit should run from `VDD = 5 V` and support `.op` and `.ac dec 20 1 1e9` analyses.
+
+Topology: Use three cascaded common-source stages. Each stage has an NMOS transistor with its source tied to ground, bulk tied to source, drain connected to `VDD` through a resistive load, and gate driven by the previous stage output. Stage 1 gate is driven by `Vin`; stage 3 drain is `Vout`.
+
+Required devices:
+VDD independent DC supply from node `VDD` to ground, value 5 V.
+Input source connected to exact node `Vin`, using a DC bias of at least 1.2 V and an AC magnitude such as 1 V for small-signal gain measurement.
+Three NMOS transistors using model `NMOS` with W=50u and L=1u:
+M1 drain `n1`, gate `Vin`, source `0`, bulk `0`.
+M2 drain `n2`, gate `n1`, source `0`, bulk `0`.
+M3 drain `Vout`, gate `n2`, source `0`, bulk `0`.
+Three drain load resistors from `VDD` to each drain, each between 10k and 100k ohm. A nominal value such as 47k is suitable:
+R1 from `VDD` to `n1`.
+R2 from `VDD` to `n2`.
+R3 from `VDD` to `Vout`.
+
+Biasing assumptions: `Vin` must be electrically driven by an explicit independent voltage source, not left floating. Use `Vin` DC around 1.5 V to exceed the required NMOS gate bias threshold condition while allowing common-source operation. Intermediate nodes `n1` and `n2` are DC-coupled into the following gates; verify with `.op` that M2 and M3 gate voltages remain high enough for conduction and that all drain nodes avoid rail saturation as much as possible.
+
+Analyses:
+Include `.op`.
+Include `.ac dec 20 1 1e9`.
+Input source should include `AC 1` so voltage gain can be read directly as `V(Vout)/V(Vin)`.
+
+Output constraints: The final SPICE netlist must contain exact nodes `Vin` and `Vout`. `Vin` must be the circuit input source node. `Vout` must be the drain/output node of the third common-source stage. No subcircuits or placeholder devices should be used.

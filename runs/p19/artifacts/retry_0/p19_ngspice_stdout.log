@@ -1,0 +1,36 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * nmos gilbert cell mixer
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                          5
+vbias_tail                                1.05
+vrfp                                         2
+vrfn                                         2
+vlop                                       3.6
+vlon                                       3.6
+voutp                                  3.46875
+voutn                                  3.46875
+rf_tail                                1.05251
+rf_drp                                   2.725
+rf_drn                                   2.725
+vlon#branch                                  0
+vlop#branch                                  0
+vrfn#branch                                  0
+vrfp#branch                                  0
+vbias_tail#branch                            0
+vdd#branch                         -0.00030625
+
+
+No. of Data Rows : 20008
+ngspice-45.2 done

@@ -1,0 +1,31 @@
+* NMOS Gilbert Cell Mixer
+VDD VDD 0 DC 5
+Vbias_tail Vbias_tail 0 DC 1.05
+Vrfp Vrfp 0 SIN(2.0 0.02 1k)
+Vrfn Vrfn 0 SIN(2.0 -0.02 1k)
+Vlop Vlop 0 SIN(3.6 0.5 1.2k)
+Vlon Vlon 0 SIN(3.6 -0.5 1.2k)
+
+Rloadp VDD Voutp 10k
+Rloadn VDD Voutn 10k
+
+Mtail rf_tail Vbias_tail 0 0 NMOS W=50u L=1u
+Mrfp rf_drp Vrfp rf_tail rf_tail NMOS W=50u L=1u
+Mrfn rf_drn Vrfn rf_tail rf_tail NMOS W=50u L=1u
+Mlo1 Voutp Vlop rf_drp rf_drp NMOS W=50u L=1u
+Mlo2 Voutn Vlon rf_drp rf_drp NMOS W=50u L=1u
+Mlo3 Voutn Vlop rf_drn rf_drn NMOS W=50u L=1u
+Mlo4 Voutp Vlon rf_drn rf_drn NMOS W=50u L=1u
+
+.model NMOS NMOS (VTO=0.7 KP=100u)
+
+.tran 1u 5m
+
+.control
+set filetype=ascii
+set wr_singlescale
+tran 1u 20m
+wrdata <REDACTED> time v(Voutp) v(Voutn)
+quit
+.endc
+.end

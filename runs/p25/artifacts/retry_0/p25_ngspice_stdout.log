@@ -1,0 +1,33 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * single-supply inverting op amp differentiator
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                          5
+vin                                          2
+vref                                       2.5
+ninv                                   2.50001
+vout                                   2.50001
+ntail                                  1.70241
+nd1                                    4.20079
+nd2                                    4.19759
+nbias                                 0.856776
+ng1                                    4.19756
+ng2                                    4.21131
+vin#branch                                   0
+vdd#branch                        -0.000819627
+
+ Reference value :  6.87916e-02
+ Reference value :  1.48688e-01
+No. of Data Rows : 200101
+ngspice-45.2 done

@@ -1,0 +1,2 @@
+{"ts_utc": "16:36:43.877510+00:00", "type": "run.started", "payload": {"run_id": "p11_a00", "backend": "codex", "task_id": "11", "task_type": "HighPass", "task_level": "Easy", "output_cir": "p11.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "16:37:20.691497+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 1}}

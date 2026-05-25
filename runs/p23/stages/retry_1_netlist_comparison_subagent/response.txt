@@ -1,0 +1,68 @@
+{
+  "status": "distinct_or_unproven",
+  "similarity": 0.7746,
+  "repeated_failure_signature": false,
+  "previous_failure_type": "functional_error",
+  "current_failure_type": "functional_error",
+  "recommendation": "continue_current_route",
+  "current_signature": {
+    "element_counts": {
+      "v": 3,
+      "r": 7,
+      "c": 4,
+      "i": 1,
+      "m": 8
+    },
+    "models": [
+      "dlim",
+      "nmos",
+      "pmos"
+    ],
+    "nodes": [
+      "nbiasn",
+      "ndrv",
+      "nload",
+      "nout1",
+      "nout2",
+      "ntail",
+      "vdd",
+      "vflim",
+      "vinn",
+      "vinp",
+      "vout",
+      "vref",
+      "vwser"
+    ],
+    "digest": "e95f163ad142100e"
+  },
+  "previous_signature": {
+    "element_counts": {
+      "v": 3,
+      "r": 7,
+      "c": 3,
+      "i": 2,
+      "m": 9
+    },
+    "models": [
+      "nmos",
+      "pmos"
+    ],
+    "nodes": [
+      "nbiasn",
+      "nbiasp",
+      "ndrv",
+      "nload",
+      "nout1",
+      "nout2",
+      "ntail",
+      "vdd",
+      "vflim",
+      "vinn",
+      "vinp",
+      "vout",
+      "vref",
+      "vwser"
+    ],
+    "digest": "204a4fb02d33c02e"
+  }
+}

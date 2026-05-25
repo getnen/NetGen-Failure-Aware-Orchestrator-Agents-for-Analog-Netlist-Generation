@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Schmitt
+Task: A non-inverting Schmitt trigger with positive feedback op-map

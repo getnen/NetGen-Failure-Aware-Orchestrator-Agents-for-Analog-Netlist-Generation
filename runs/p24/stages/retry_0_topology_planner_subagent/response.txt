@@ -1,0 +1,27 @@
+**Topology Summary**
+Single-supply inverting op-amp integrator. Preserve external node names `Vin` and `Vout`. Use `Vref` as the 2.5 V virtual ground. The op-amp non-inverting input connects to `Vref`; the inverting summing node can be `NINV`. `R1` connects `Vin` to `NINV`, and `Cf` connects from `Vout` back to `NINV`.
+
+**Device/Function List**
+- `VDD`: independent DC source from `VDD` to `0`, value `5V`.
+- `Vin` source: independent square/PULSE source from `Vin` to `Vref`, not ground, so `Vin` swings around the reference.
+- `Vref` divider: two equal resistors from `VDD` to `0`, midpoint node `Vref`; optional bypass capacitor from `Vref` to `0`.
+- `R1`: input resistor from `Vin` to `NINV`, suggested `10k`.
+- `Cf`: feedback capacitor from `Vout` to `NINV`, suggested `100n`.
+- Op-amp primitive model: high-gain voltage-controlled source or behavioral primitive using `Vref - V(NINV)` as differential input, with output at `Vout`; output should be limited to the 0 V to 5 V single-supply rails if the chosen primitive supports limiting.
+
+**Bias/Reference Strategy**
+Use `VDD = 5V` and `Vref = 2.5V`. Drive `Vin` as a square wave centered on `Vref`, for example absolute levels `2.0V` to `3.0V`, implemented as a source between `Vin` and `Vref` or otherwise ensuring `Vin` is not floating and is centered around `Vref`. The op-amp gain should keep `NINV` close to `Vref`.
+
+**Signal Or Feedback Path**
+Input current flows through `R1` from `Vin` into the summing node `NINV`. The capacitor `Cf` provides the only intended AC feedback path from `Vout` to `NINV`, forcing `Vout` to ramp in the opposite direction of the input deviation from `Vref`. When `Vin > Vref`, `Vout` ramps downward; when `Vin < Vref`, `Vout` ramps upward.
+
+**SPICE/Netlist Constraints**
+Include `.tran 1u 10m`. Probe or print `V(Vin)` and `V(Vout)`. The final file should be `p24.cir`. Node names `Vin` and `Vout` must appear exactly as the driven input and output nodes. No undefined op-amp subcircuit placeholders should be used; any op-amp model must be primitive or fully defined locally.
+
+**Failure Risks To Avoid**
+- Do not leave `Vin` floating; it must be explicitly driven.
+- Do not drive `Vin` only relative to ground unless the waveform is still centered at `2.5V`.
+- Do not rename `Vout` or hide it behind an internal alias.
+- Avoid an unbounded op-amp output if the simulator behavior would produce unrealistic rail excursions.
+- Avoid choosing `R1*Cf` or input amplitude so large/small that `Vout` saturates before a clear triangular waveform is visible over `10ms`.
+- Avoid omitting a DC bias path/reference for the op-amp inputs in the single-supply setup.

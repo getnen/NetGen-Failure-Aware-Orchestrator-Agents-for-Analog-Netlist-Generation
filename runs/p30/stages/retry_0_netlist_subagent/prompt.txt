@@ -1,0 +1,168 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p30.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For PLL tasks, preserve `clk_ref` and `clk_p` explicitly, keep one real control node with storage, and make that node materially steer the VCO delay path. Choose first-pass VCO sizing so the free-running range is near the reference frequency, then let the loop pull into lock. Avoid detector cosmetics that add many helper nodes without improving control authority, and avoid current-starved rings that still contain a strong uncontrolled parallel inverter path. Prefer a compact PFD/charge-pump/filter feeding a controllable ring or other compact VCO with only the helper nodes required to generate and reset UP/DN. The internal VCO should already be able to free-run cleanly before the loop tries to correct it.
+
+=== TOPOLOGY PLAN ===
+**Topology summary**
+
+Use a compact closed-loop MOS PLL with this path:
+
+`clk_ref` -> PFD -> UP/DN -> charge pump -> loop filter / `VCTRL` -> current-starved ring VCO -> output buffer -> `clk_p` -> direct feedback to PFD.
+
+Recommended implementation:
+- Phase/frequency detector: minimal two-state PFD built from MOS latches or edge-triggered set/reset stages, with explicit UP and DN outputs and an active reset path when both edges have occurred.
+- Charge pump: matched PMOS source branch and NMOS sink branch that charge/discharge `VCTRL` according to UP/DN.
+- Loop filter: one real capacitor on `VCTRL` plus a modest damping resistor/capacitor arrangement if needed to reduce ripple and peaking.
+- VCO: 3-stage current-starved ring oscillator preferred for simplicity. `VCTRL` must directly control the starvation devices in each delay cell.
+- Output stage: one or two CMOS inverters buffering one ring node to produce rail-to-rail `clk_p`; feed this same buffered clock back to the PFD.
+
+**Device/function list**
+
+- NMOS/PMOS latch or pulse-memory devices for PFD state generation.
+- NMOS/PMOS reset devices for the PFD common reset path.
+- PMOS current-source / switch devices for UP charging action.
+- NMOS current-sink / switch devices for DN discharging action.
+- Loop-filter capacitor on `VCTRL`.
+- Optional modest loop-filter resistor for damping or ripple shaping.
+- Three current-starved inverter delay cells for the ring VCO.
+- Bias-setting MOS devices or mirrors only if needed to make pump/VCO currents repeatable.
+- CMOS output buffer stages generating `clk_p`.
+- Independent sources: `VDD`, ground `VSS`, and pulse source driving `clk_ref`.
+
+**Bias/reference strategy**
+
+- Single supply: `VDD = 1.8 V`, `VSS = 0 V`.
+- Drive `clk_ref` explicitly with a pulse source at the chosen reference frequency; nominal 10 MHz is acceptable.
+- Keep bulk tied to source unless a different substrate assumption is intentionally documented.
+- Hold `VCTRL` with a real storage capacitor; do not rely on leakage for detector or filter state definition.
+- If analog bias is needed for current mirrors or pump reference current, derive a simple mid-supply related bias near 0.9 V, but do not leave control nodes floating.
+- Size the VCO so mid-range `VCTRL` gives a free-running frequency near the target reference, with tuning span both below and above it.
+
+**Signal or feedback path**
+
+- `clk_ref` enters the PFD reference side directly.
+- `clk_p` is the buffered VCO output and must also be the only feedback clock sent back to the PFD.
+- PFD UP/DN outputs must actively drive the charge-pump switches.
+- Charge pump sources/sinks net current into the single inspectable control node `VCTRL`.
+- `VCTRL` directly modulates the current-starving transistors in the ring delay path.
+- Expected transient behavior:
+  - If `clk_p` is slow, UP dominates, `VCTRL` rises, VCO speeds up.
+  - If `clk_p` is fast, DN dominates, `VCTRL` falls, VCO slows down.
+  - In lock, `clk_p` frequency approaches `clk_ref`, with bounded phase offset and reduced `VCTRL` ripple.
+
+**SPICE/netlist constraints**
+
+- Preserve node names exactly: `clk_ref`, `clk_p`.
+- Keep one explicit control node, preferably `VCTRL`.
+- No behavioral PLL abstraction, no VCVS/VCCS shortcuts for the main loop.
+- Every helper node used later must be actively generated by a present MOS stage.
+- Avoid XOR-only phase detection; use a real PFD so frequency error is captured.
+- Transient analysis should be long enough to show acquisition and settling; for 10 MHz reference, start around 50 us to 200 us.
+- If startup help is needed for the ring, use a small intentional asymmetry or documented initial condition, not an unrealistic artificial driver.
+
+**Failure risks to avoid**
+
+- VCO tuning range entirely above or below the `clk_ref` target, preventing capture.
+- Current-starved ring cells with strong uncontrolled inverter paths that bypass `VCTRL` and weaken tuning sensitivity.
+- PFD nodes that float or depend on giant leak resistors instead of active set/reset action.
+- Charge pump overlap causing static shoot-through or large reference-spur ripple on `VCTRL`.
+- Using an internal unbuffered ring node for feedback while exporting a different node as `clk_p`; feedback should come from the same controlled output path.
+- Oversized loop-filter resistor/capacitor causing either excessive ripple, very slow lock, or unstable hunting.
+- Output buffer loading the ring too heavily and shifting the VCO center frequency; isolate with a dedicated buffer stage.
+
+=== PARAMETER TARGETS ===
+- Commit to one closed-loop PLL family and tune within it rather than mixing unrelated detector, filter, and oscillator ideas.
+- Prefer a compact detector/comparison path with only the helper nodes that are actually needed to generate UP/DN or an equivalent correction signal.
+- Do not rely on giant leak resistors as primary state holders for reset, latch, or detector nodes; use real active regeneration and only modest passive stabilization where needed.
+- Make the control node materially steer the oscillator delay path. If using a current-starved ring, avoid strong uncontrolled parallel inverter branches that let the ring free-run largely independent of the control node.
+- Choose first-pass loop filter and VCO delay strength so the free-running oscillator range is plausibly near the reference, then let local tuning pull it into lock.
+- Make the internal VCO a good standalone oscillator first: it should be able to free-run and respond monotonically to the control node before the full loop tries to acquire lock.
+
+=== NORMALIZED SPEC ===
+final_filename: p30.cir
+
+Objective:
+Implement a primitive-MOS PLL that locks the oscillator output clk_p to the external reference input clk_ref by generating a phase/frequency error, filtering it into a stable control voltage, and steering a MOS VCO whose tuning range straddles the reference frequency.
+
+Supply convention and operating assumptions:
+Use a single 1.8 V supply with nodes VDD = 1.8 V and VSS = 0 V.
+Drive the required input node clk_ref explicitly with an independent pulse source referenced to VSS; a reasonable default is 0 V to 1.8 V, 50% duty cycle, with a nominal 10 MHz reference unless the downstream implementation chooses another clearly documented target.
+Use MOSFET bulk tied to source for discrete idealized primitive devices unless a shared-substrate process assumption is explicitly introduced and documented.
+Provide a mid-supply bias reference near 0.9 V only where needed for analog bias/current-setting stages; do not leave control or detector nodes floating.
+
+Topology:
+Use one contiguous closed-loop path:
+1. Phase/frequency detector comparing clk_ref against the fed-back VCO clock.
+2. MOS charge-pump or equivalent up/down transconductance stage that converts detector decisions into sourced or sunk current on the loop-filter control node.
+3. Loop filter/control-storage network producing VCTRL.
+4. Current-starved ring VCO whose oscillation frequency is materially controlled by VCTRL.
+5. Output buffer exposing the actual controlled oscillator output as clk_p, and feed that same clock back directly to the detector input.
+
+Preferred implementation:
+Use a compact MOS phase-frequency detector rather than an XOR-only detector, because the PLL must capture frequency error as well as phase error. A simple two-latch/two-reset PFD is acceptable if implemented contiguously and minimally, with actively driven UP and DOWN nodes and a real reset path.
+Follow the PFD with a charge pump made from matched PMOS/NMOS current-steering devices charging/discharging the loop-filter node. Avoid using large leak resistors as the main state-holding mechanism.
+Use a passive loop filter with at least one real storage capacitor on VCTRL and a modest resistor in series or parallel as needed to add damping and reduce ripple. The filter must smooth UP/DOWN pulses into a stable analog control voltage.
+Use a 3-stage or 5-stage current-starved ring oscillator. The control node VCTRL must set the current available to the delay cells so the oscillation frequency clearly increases or decreases with VCTRL. Avoid strong always-on inverter branches that let the oscillator free-run almost independently of VCTRL.
+Buffer the ring output to produce a rail-to-rail clk_p suitable both for observation and for feedback into the detector.
+
+Required devices:
+Primitive NMOS and PMOS transistors for:
+phase/frequency detector latches and reset logic,
+charge-pump current sources/sinks and switching devices,
+current-starved inverter delay cells in the VCO,
+output buffer/inverter stages,
+bias mirrors or bias-setting transistors if needed.
+Passive components:
+loop-filter capacitor(s),
+modest loop-filter resistor(s),
+small startup or damping passives only if clearly justified.
+Independent sources:
+VDD supply source,
+explicit pulse source on clk_ref.
+
+Key interconnectivity:
+clk_ref must enter the PFD reference input directly.
+clk_p must be the buffered VCO output and must also be the feedback clock returned to the PFD comparison input.
+The PFD must produce UP and DOWN control actions that directly drive a contiguous charge/discharge path into the loop-filter control node VCTRL.
+VCTRL must connect directly to the VCO control devices that starve or boost the ring-delay current.
+No helper node referenced later may be left as an undriven placeholder; every internal control node must be produced by an active device stage.
+
+Biasing and sizing assumptions:
+Choose modest initial MOS sizing, favoring symmetric inverters in the ring and matched pump devices to reduce static phase offset.
+Bias the charge pump so VCTRL can settle over a meaningful tuning span, for example roughly 0.3 V to 1.5 V on a 1.8 V supply.
+Size the VCO so its free-running center frequency at mid-control is near the assumed clk_ref frequency, with the full tuning range spanning below and above that frequency to allow capture.
+Use threshold-aware sizing so detector and reset paths switch cleanly at 1.8 V logic levels without relying on unrealistic zero-Vth behavior.
+
+Expected behavior:
+If clk_p starts slower than clk_ref, the detector should generate net UP action, the loop filter should raise VCTRL, and the VCO frequency should increase.
+If clk_p starts faster than clk_ref, the detector should generate net DOWN action, the loop filter should lower VCTRL, and the VCO frequency should decrease.
+During lock, clk_p should converge to the clk_ref frequency with a bounded phase offset and reduced control-voltage ripple after filtering.
+The transient result should show capture behavior first, then near-aligned periodic waveforms for clk_ref and clk_p.
+
+Analyses required:
+Run transient analysis long enough to show acquisition and lock, not just steady oscillation. For a nominal 10 MHz reference and a compact RC loop filter, a starting target of 50 us to 200 us is reasonable.
+Set initial conditions or startup asymmetry only if needed to guarantee VCO startup; document any such choice.
+Verify:
+clk_ref is externally driven and present,
+clk_p oscillates and is the actual controlled output,
+VCTRL moves during acquisition and settles during lock,
+clk_p frequency converges to clk_ref frequency,
+phase error and control ripple reduce after lock.
+Optionally include measurements of reference period, output period, average VCTRL, and phase difference near the end of the transient run.
+
+Output constraints:
+The final netlist must include the exact named nodes clk_ref and clk_p.
+The implementation must remain primitive-device SPICE, not a behavioral PLL abstraction.
+The PLL must include an explicit detector, loop-filter/control-storage path, and controllable oscillator stage in one closed loop.
+The downstream implementation should document the assumed reference frequency and ensure the VCO tuning range plausibly straddles it.

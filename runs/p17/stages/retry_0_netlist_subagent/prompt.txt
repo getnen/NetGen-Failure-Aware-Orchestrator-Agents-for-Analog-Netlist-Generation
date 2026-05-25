@@ -1,0 +1,82 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p17.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+Build a 5 V four-transistor NMOS cascode current mirror. The input/reference side is a stacked diode-connected NMOS branch that generates two bias voltages. The output side is a matched stacked NMOS branch that mirrors the reference current into a resistive load connected to `VDD`.
+
+**Device/Function List**
+- `VDD`: independent DC supply, `VDD` to `0`, value `5 V`.
+- `IREFSRC`: independent DC current source from `VDD` to `Iref`, value `100uA`.
+- `R`: load resistor from `VDD` to `Iout`, value `10k`.
+- `M1`: reference bottom NMOS, diode-connected with `drain=gate=nref_mid`, `source=0`, `bulk=0`.
+- `M2`: reference cascode/top NMOS, diode-connected with `drain=gate=Iref`, `source=nref_mid`, `bulk=nref_mid`.
+- `M3`: output bottom NMOS mirror device, `drain=nout_mid`, `gate=nref_mid`, `source=0`, `bulk=0`.
+- `M4`: output cascode/top NMOS, `drain=Iout`, `gate=Iref`, `source=nout_mid`, `bulk=nout_mid`.
+- NMOS model: LEVEL 1 NMOS, `VTO≈0.6 V`, `KP=100u`, devices sized `W=50u`, `L=1u`.
+
+**Bias/Reference Strategy**
+`IREFSRC` forces `100uA` from `VDD` into `Iref`, through the diode-connected reference stack `M2-M1` to ground. This self-biases:
+- `nref_mid`: gate bias for bottom mirror devices `M1/M3`.
+- `Iref`: gate bias for cascode devices `M2/M4`.
+
+Bulks should be tied to sources to avoid unwanted body effect.
+
+**Signal Or Feedback Path**
+The reference stack provides local diode-connected feedback: `M1` regulates `nref_mid`, and `M2` regulates `Iref`. These two voltages are copied to the output stack gates, causing `M3/M4` to sink approximately the same current as the reference branch, limited by output compliance and the `10k` load.
+
+**SPICE/Netlist Constraints**
+- Final filename should be `p17.cir`.
+- Preserve node names exactly: `Iref` and `Iout`.
+- Include only `.op` analysis.
+- Do not use subcircuits or placeholders.
+- Use explicit independent source line equivalent to: `IREFSRC VDD Iref DC 100uA`.
+- `Iout` must be the node shared by `R` bottom terminal and `M4` drain.
+- `Iref` must be the node shared by `IREFSRC` output, `M2` drain, `M2` gate, and `M4` gate.
+
+**Failure Risks To Avoid**
+- Do not reverse `IREFSRC`; it must force current from `VDD` into `Iref`.
+- Do not omit diode connections on `M1` and `M2`.
+- Do not tie `M2` or `M4` bulk to ground; tie each to its source node.
+- Do not rename `Iref` or `Iout`.
+- Do not connect `R` to an internal node such as `nout_mid`; it belongs from `VDD` to `Iout`.
+- Ensure output branch has enough voltage headroom; otherwise `.op` may show reduced mirror current or one output transistor leaving saturation.
+
+=== NORMALIZED SPEC ===
+final_filename: p17.cir
+
+Objective: create a 5 V NMOS cascode current mirror with four MOSFETs, a diode-connected reference stack driven by an explicit reference current source at node Iref, and a resistive load at output node Iout.
+
+Topology:
+Use four NMOS devices:
+M1: reference bottom device, drain=gate=nref_mid, source=0, bulk=0.
+M2: reference cascode/top device, drain=gate=Iref, source=nref_mid, bulk=nref_mid.
+M3: output bottom mirror device, drain=nout_mid, gate=nref_mid, source=0, bulk=0.
+M4: output cascode/top device, drain=Iout, gate=Iref, source=nout_mid, bulk=nout_mid.
+
+Required devices:
+VDD source: VDD VDD 0 DC 5.
+Reference current source: IREFSRC VDD Iref DC 100uA, forcing current from VDD into node Iref and through the diode-connected input stack.
+Load resistor: R VDD Iout 10k.
+MOSFETs: M1-M4 using NMOS model.
+NMOS model: LEVEL=1, VTO about 0.6 V, KP=100u, W=50u, L=1u.
+
+Biasing assumptions:
+The reference branch self-generates two gate biases: nref_mid biases the bottom mirror devices, and Iref biases the cascode devices. All MOS bulks are tied to their respective sources. The selected 100 uA reference current and nominal W/L should bias the stack above threshold under VDD=5 V. The output branch mirrors the reference current into the resistive load, subject to enough compliance voltage at Iout.
+
+Analyses:
+Include .op only.
+
+Output constraints:
+The final netlist must contain nodes Iref and Iout exactly as named.
+Iref must be electrically driven by the explicit independent current source IREFSRC from VDD to Iref.
+Iout must be the output/load node at the drain of the output cascode transistor and bottom of resistor R.
+Do not use subcircuits or placeholders.

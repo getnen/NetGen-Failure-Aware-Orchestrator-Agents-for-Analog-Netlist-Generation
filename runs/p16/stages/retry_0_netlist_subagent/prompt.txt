@@ -1,0 +1,85 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p16.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For Opamp tasks, preserve all requested bias input nodes exactly as independent DC sources, keep every MOSFET biased in conduction, and avoid floating high-impedance outputs by adding only minimal leak paths if needed for convergence. A passing topology needs differential gain larger than common-mode gain under the checker's 100 Hz small-signal test, not merely a valid .op point. Prefer plain `DC ... AC magnitude` input-source syntax without extra AC phase terms unless phase is truly required, because evaluators may perturb one source to create differential excitation. For stacked op-amps, keep a sensible bias ladder: tail bias lowest, lower NMOS cascode bias above it, and upper PMOS bias above the PMOS load/cascode bias.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a single-stage 5 V CMOS differential opamp core. The input stage is an NMOS differential pair with shared NMOS tail current source. The load is a PMOS active current mirror tied to `VDD`, producing two drain/output nodes: `Voutp` on the diode-connected reference side and `Vout` on the mirrored load side.
+
+**Device/Function List**
+
+- `M1`: NMOS input device for non-inverting input. Drain at `Voutp`, gate at `Vinp`, source/bulk at shared tail node.
+- `M2`: NMOS input device for inverting input. Drain at `Vout`, gate at `Vinn`, source/bulk at shared tail node.
+- `M3`: PMOS diode-connected active load/reference. Source/bulk at `VDD`, drain/gate tied to `Voutp`.
+- `M4`: PMOS mirror load. Source/bulk at `VDD`, gate tied to `Voutp`, drain at `Vout`.
+- `M5`: NMOS tail current source. Drain at tail node, gate at `Vbias`, source/bulk at ground.
+
+**Bias/Reference Strategy**
+
+Use a 5 V supply. Drive `Vinp` and `Vinn` with explicit independent DC voltage sources set to 2.5 V for balanced operation. Drive `Vbias` with an explicit independent DC source around 1.2-1.5 V so `M5` conducts while leaving enough voltage headroom for `M1`/`M2`.
+
+The tail node should settle below 2.5 V so the input pair has positive `VGS`. `Voutp` and `Vout` should settle below `VDD` enough to turn on the PMOS loads and above the tail node enough to keep the NMOS input devices conducting.
+
+**Signal Or Feedback Path**
+
+`Vinp` and `Vinn` modulate the current split through `M1` and `M2`. The `M1` branch current flows through diode-connected `M3`, establishing the PMOS mirror gate voltage at `Voutp`. That same gate voltage drives `M4`, mirroring load current into the `M2` branch at `Vout`.
+
+`Voutp` is both an output node and the local PMOS mirror feedback/reference node because `M3` has drain and gate tied together. `Vout` is the mirrored high-gain output node. No global feedback loop is required.
+
+**SPICE/Netlist Constraints**
+
+- Preserve node names exactly: inputs `Vinp`, `Vinn`, `Vbias`; outputs `Voutp`, `Vout`.
+- Include explicit independent voltage sources for `Vinp`, `Vinn`, and `Vbias`.
+- Include explicit 5 V `VDD` supply and ground reference.
+- Do not use subcircuits or hidden/floating input nodes.
+- Use source-tied bulks:
+  - NMOS `M1`/`M2` bulk tied to tail node.
+  - NMOS `M5` bulk tied to ground.
+  - PMOS `M3`/`M4` bulk tied to `VDD`.
+- Include `.op`.
+- Use NMOS model with `VTO=0.7`, `KP=100u`, `W=50u`, `L=1u`.
+- Use PMOS model with `VTO=-0.7`, `KP=50u`, `W=100u`, `L=1u`.
+
+**Failure Risks To Avoid**
+
+- Do not swap `Voutp` and `Vout`: `Voutp` must be the diode-connected PMOS reference side.
+- Do not leave `Vbias`, `Vinp`, or `Vinn` floating.
+- Do not tie PMOS bulks to ground; they must tie to `VDD`.
+- Do not tie `M1`/`M2` bulks to ground if the spec requires source-tied bulks.
+- Do not make `M4` diode-connected; only `M3` is diode-connected.
+- Avoid choosing `Vbias` too low, which turns off `M5`, or too high, which can push the tail node up and starve input-pair headroom.
+- Avoid output nodes pinned at rails in `.op`; all five MOSFETs should show nonzero drain current.
+
+=== NORMALIZED SPEC ===
+final_filename: p16.cir
+
+Objective: Create a 5 V single-supply differential opamp core with an NMOS differential input pair, PMOS active current-mirror load, NMOS tail current source, and two output nodes named exactly Voutp and Vout. The circuit must support a valid DC operating point where every MOSFET conducts.
+
+Topology: Use NMOS M1/M2 as the differential pair. M1 gate connects to Vinp, M2 gate connects to Vinn, and their sources join at the tail node. Use PMOS M3/M4 as the active load from VDD to the two drain/output nodes. M3 is diode-connected on the Voutp side to form the PMOS mirror reference, with M3 drain/gate tied to Voutp. M4 gate ties to M3 gate and M4 drain connects to Vout. M3 and M4 sources connect to VDD. Use NMOS M5 as the tail current source from the shared source tail node to ground, with M5 gate driven by Vbias, drain at the tail node, source/bulk at ground.
+
+Required devices:
+M1: NMOS differential input transistor, drain at Voutp, gate Vinp, source tail node, bulk tied to source.
+M2: NMOS differential input transistor, drain at Vout, gate Vinn, source tail node, bulk tied to source.
+M3: PMOS diode-connected active load, source/bulk VDD, drain/gate Voutp.
+M4: PMOS mirror load, source/bulk VDD, gate Voutp, drain Vout.
+M5: NMOS tail current source, drain tail node, gate Vbias, source/bulk ground.
+
+Biasing assumptions: VDD is 5 V. Drive Vinp and Vinn explicitly with independent DC voltage sources at 2.5 V for balanced operation. Drive Vbias explicitly with an independent DC source high enough to turn on M5, for example about 1.2 V to 1.5 V, giving VGS above the 0.7 V NMOS threshold while preserving headroom for M1/M2. The common source tail node should settle below the 2.5 V inputs so M1/M2 conduct, and Voutp/Vout should settle below VDD enough for the PMOS loads to conduct.
+
+MOS models: Use the requested NMOS model with Vth=0.7 V, kp=100u, W=50u, L=1u, and PMOS model with Vth=-0.7 V, kp=50u, W=100u, L=1u. Connect MOS bulks to their sources.
+
+Analyses: Include `.op` to verify the DC operating point. The operating point should show nonzero drain current in M1, M2, M3, M4, and M5. With Vinp=Vinn=2.5 V, the two branches should be approximately balanced, and Voutp and Vout should both sit at valid high-impedance gain/load nodes rather than rails.
+
+Output constraints: The final netlist must contain the exact input nodes Vinp, Vinn, and Vbias, each driven by an explicit independent voltage source. The final netlist must contain the exact output nodes Voutp and Vout. Use no subcircuits or hidden floating inputs.

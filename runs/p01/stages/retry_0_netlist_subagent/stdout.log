@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019de8fa-1ca7-7693-8e43-d893d1dec5d1"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* NMOS common-source amplifier with resistive drain load\nVDD VDD 0 DC 5\nVin_src Vin 0 DC 1.2 AC 1\nR VDD Vout 10k\nM1 Vout Vin 0 0 NMOS W=50u L=1u\n.model NMOS NMOS (LEVEL=1 VTO=0.7 KP=100u LAMBDA=0.02)\n.op\n.ac dec 20 1 1e9\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":24420,"cached_input_tokens":6528,"output_tokens":628,"reasoning_output_tokens":516}}

@@ -1,0 +1,48 @@
+* 5V single-supply transistor Wien bridge oscillator
+VDD VDD 0 DC 5
+VREF Vref 0 DC 2.5
+
+Rw1 Vout Vwser 10k
+Cw1 Vwser Vinp 10n
+Rw2 Vinp Vref 10k
+Cw2 Vinp Vref 10n
+
+Rf1 Vout Vflim 3.3k
+Rf2 Vflim Vinn 18k
+Rg Vinn Vref 10k
+* Dlim1 Vout Vflim DLIM
+* Dlim2 Vflim Vout DLIM
+
+Itail ntail 0 DC 260u
+M1 nload Vinp ntail ntail NMOS W=180u L=2u
+M2 nout1 Vinn ntail ntail NMOS W=180u L=2u
+M3 nload nload VDD VDD PMOS W=420u L=2u
+M4 nout1 nload VDD VDD PMOS W=420u L=2u
+
+M5 nout2 nout1 VDD VDD PMOS W=560u L=2u
+M6 nout2 nbiasn 0 0 NMOS W=220u L=2u
+
+VBN nbiasn 0 DC 1.05
+Rdrv nout2 ndrv 3.3k
+Cdom ndrv Vout 8p
+M7 Vout ndrv VDD VDD PMOS W=420u L=2u
+M8 Vout nbiasn 0 0 NMOS W=180u L=2u
+Rbleed Vout Vref 100k
+Cload Vout 0 50p
+
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=220u LAMBDA=0.02
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=90u LAMBDA=0.02
+.model DLIM D IS=1n RS=20 N=1.8 CJO=0.2p
+
+.ic V(Vinp)=2.501 V(Vinn)=2.499 V(Vout)=2.55 V(Vwser)=2.6 V(nout1)=2.2 V(nout2)=2.8 V(ndrv)=2.4
+.save V(Vout) V(Vinp) V(Vinn)
+.tran 1u 5m
+
+.control
+set filetype=ascii
+set wr_singlescale
+tran 1u 20m uic
+wrdata <REDACTED> time v(Vout)
+quit
+.endc
+.end

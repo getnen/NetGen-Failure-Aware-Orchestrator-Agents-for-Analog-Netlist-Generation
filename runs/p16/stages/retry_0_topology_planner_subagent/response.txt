@@ -1,0 +1,47 @@
+**Topology Summary**
+
+Use a single-stage 5 V CMOS differential opamp core. The input stage is an NMOS differential pair with shared NMOS tail current source. The load is a PMOS active current mirror tied to `VDD`, producing two drain/output nodes: `Voutp` on the diode-connected reference side and `Vout` on the mirrored load side.
+
+**Device/Function List**
+
+- `M1`: NMOS input device for non-inverting input. Drain at `Voutp`, gate at `Vinp`, source/bulk at shared tail node.
+- `M2`: NMOS input device for inverting input. Drain at `Vout`, gate at `Vinn`, source/bulk at shared tail node.
+- `M3`: PMOS diode-connected active load/reference. Source/bulk at `VDD`, drain/gate tied to `Voutp`.
+- `M4`: PMOS mirror load. Source/bulk at `VDD`, gate tied to `Voutp`, drain at `Vout`.
+- `M5`: NMOS tail current source. Drain at tail node, gate at `Vbias`, source/bulk at ground.
+
+**Bias/Reference Strategy**
+
+Use a 5 V supply. Drive `Vinp` and `Vinn` with explicit independent DC voltage sources set to 2.5 V for balanced operation. Drive `Vbias` with an explicit independent DC source around 1.2-1.5 V so `M5` conducts while leaving enough voltage headroom for `M1`/`M2`.
+
+The tail node should settle below 2.5 V so the input pair has positive `VGS`. `Voutp` and `Vout` should settle below `VDD` enough to turn on the PMOS loads and above the tail node enough to keep the NMOS input devices conducting.
+
+**Signal Or Feedback Path**
+
+`Vinp` and `Vinn` modulate the current split through `M1` and `M2`. The `M1` branch current flows through diode-connected `M3`, establishing the PMOS mirror gate voltage at `Voutp`. That same gate voltage drives `M4`, mirroring load current into the `M2` branch at `Vout`.
+
+`Voutp` is both an output node and the local PMOS mirror feedback/reference node because `M3` has drain and gate tied together. `Vout` is the mirrored high-gain output node. No global feedback loop is required.
+
+**SPICE/Netlist Constraints**
+
+- Preserve node names exactly: inputs `Vinp`, `Vinn`, `Vbias`; outputs `Voutp`, `Vout`.
+- Include explicit independent voltage sources for `Vinp`, `Vinn`, and `Vbias`.
+- Include explicit 5 V `VDD` supply and ground reference.
+- Do not use subcircuits or hidden/floating input nodes.
+- Use source-tied bulks:
+  - NMOS `M1`/`M2` bulk tied to tail node.
+  - NMOS `M5` bulk tied to ground.
+  - PMOS `M3`/`M4` bulk tied to `VDD`.
+- Include `.op`.
+- Use NMOS model with `VTO=0.7`, `KP=100u`, `W=50u`, `L=1u`.
+- Use PMOS model with `VTO=-0.7`, `KP=50u`, `W=100u`, `L=1u`.
+
+**Failure Risks To Avoid**
+
+- Do not swap `Voutp` and `Vout`: `Voutp` must be the diode-connected PMOS reference side.
+- Do not leave `Vbias`, `Vinp`, or `Vinn` floating.
+- Do not tie PMOS bulks to ground; they must tie to `VDD`.
+- Do not tie `M1`/`M2` bulks to ground if the spec requires source-tied bulks.
+- Do not make `M4` diode-connected; only `M3` is diode-connected.
+- Avoid choosing `Vbias` too low, which turns off `M5`, or too high, which can push the tail node up and starve input-pair headroom.
+- Avoid output nodes pinned at rails in `.op`; all five MOSFETs should show nonzero drain current.

@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Opamp
+Task: A single-stage differential common-source opamp with dual resistive loads, tail current, and a single output

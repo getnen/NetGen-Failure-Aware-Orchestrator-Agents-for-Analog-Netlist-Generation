@@ -1,0 +1,22 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "failure_family": "",
+  "repair_scope": "done",
+  "retryable": false,
+  "summary": "Rising trigger point: 2.7900820654569864\nFalling trigger point: 1.8105163665409565\nHysteresis width: 0.97956569891603\nOutput swing: 4.099494089",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Rising trigger point: 2.7900820654569864\nFalling trigger point: 1.8105163665409565\nHysteresis width: 0.97956569891603\nOutput swing: 4.099494089",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

@@ -1,0 +1,138 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+Do not leave commented-out candidate SPICE elements in the returned deck; remove dead alternatives instead of commenting them out.
+If a stage or limiter is not used, delete every dependent helper node reference instead of returning a half-disabled structure.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p12.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a 2-stage passive RC ladder from `Vin` to `Vout`:
+
+1. A first-order high-pass section: series `C1` from `Vin` to internal node `N1`, with `R1` from `N1` to ground.
+2. A first-order low-pass section: series `R2` from `N1` to `Vout`, with `C2` from `Vout` to ground.
+
+This realizes a passive band-pass response with low-frequency attenuation from the input coupling capacitor and high-frequency attenuation from the output shunt capacitor.
+
+**Device/Function List**
+
+- `V1` between `Vin` and `0`, AC magnitude 1.
+  Purpose: required small-signal excitation.
+- `C1` from `Vin` to `N1`.
+  Purpose: high-pass series element; blocks low frequency/DC.
+- `R1` from `N1` to `0`.
+  Purpose: high-pass return path; sets low cutoff with `C1`.
+- `R2` from `N1` to `Vout`.
+  Purpose: low-pass series element; isolates `Vout` from `N1`.
+- `C2` from `Vout` to `0`.
+  Purpose: low-pass shunt element; sets high cutoff with `R2`.
+
+Recommended values:
+- `C1 = 10 nF`
+- `R1 = 10 kOhm`
+- `R2 = 10 kOhm`
+- `C2 = 1 nF`
+
+Expected nominal corners:
+- Low corner near 1.59 kHz
+- High corner near 15.9 kHz
+- Broad center region around 5 kHz
+
+**Bias/Reference Strategy**
+
+No DC bias network or supply rails are needed. This is a passive AC filter with ground node `0` as the only reference. `Vin` must not float; it is driven explicitly by `V1 Vin 0 AC 1`. `N1` is an internal signal node only.
+
+**Signal Or Feedback Path**
+
+Signal path is strictly forward:
+
+`Vin` -> `C1` -> `N1` -> `R2` -> `Vout`
+
+Shunt return paths:
+- `N1` -> `R1` -> `0`
+- `Vout` -> `C2` -> `0`
+
+There is no intentional feedback loop. Any interaction is due to passive loading between the two RC sections.
+
+**SPICE/Netlist Constraints**
+
+- Preserve node names `Vin` and `Vout` exactly.
+- Use only primitive passive elements plus the independent source `V1`.
+- Include `.ac dec 20 1 1e9`.
+- Do not add buffers, dependent sources, switches, behavioral elements, or op-amps.
+- Keep one internal node such as `N1`; do not collapse stages into a single node arrangement that destroys the band-pass behavior.
+
+**Failure Risks To Avoid**
+
+- Do not omit `R1`; without it, the high-pass node can become improperly referenced.
+- Do not place `C2` on `N1`; it must shunt `Vout` to ground for the low-pass stage.
+- Do not swap series/shunt roles of `C1` and `R2`; that changes the filter type.
+- Do not expect 0 dB or higher gain; this is passive and unbuffered, so insertion loss is normal.
+- Do not assume ideal uncoupled corner frequencies; `R2` and `C2` load the first stage, so the response will be softened and the exact peak may shift somewhat.
+- Do not rename ports or use floating aliases for `Vin`/`Vout`.
+
+=== PARAMETER TARGETS ===
+- Commit to one band-pass family and pick first-pass values from that family rather than mixing unrelated sections.
+- If using an RLC band-pass, pick L and C so the resonant frequency lands near the target center frequency and include enough damping or loading control to keep the peak selective rather than extremely broad.
+- If using a cascaded high-pass plus low-pass band-pass, choose the two corners so the center frequency lies near the geometric mean of the corners and the passband is visibly stronger than both low- and high-frequency regions.
+
+=== NORMALIZED SPEC ===
+final_filename: p12.cir
+
+Objective: realize a passive band-pass filter from `Vin` to `Vout` using primitive passive SPICE elements, driven by the required AC source `V1 Vin 0 AC 1`. The filter should attenuate low frequencies, pass a midband region, and attenuate high frequencies, with a clearly defined center frequency visible in AC analysis.
+
+Topology: use a cascaded passive RC band-pass structure:
+1. A first-order high-pass section from `Vin` into an internal node.
+2. A first-order low-pass section from that internal node to `Vout`.
+
+Required devices:
+- One independent AC voltage source: `V1 Vin 0 AC 1`
+- One series capacitor for the high-pass input path
+- One shunt resistor to ground for the high-pass section
+- One series resistor for the low-pass section
+- One shunt capacitor to ground at `Vout`
+
+Recommended interconnectivity:
+- Connect `V1` between `Vin` and `0`.
+- Place capacitor `C1` from `Vin` to an internal node such as `N1`.
+- Place resistor `R1` from `N1` to `0`.
+- Place resistor `R2` from `N1` to `Vout`.
+- Place capacitor `C2` from `Vout` to `0`.
+
+Recommended values for a clear passband:
+- `C1 = 10 nF`
+- `R1 = 10 kOhm`
+- `R2 = 10 kOhm`
+- `C2 = 1 nF`
+
+These values give:
+- High-pass corner near `fL = 1 / (2*pi*R1*C1) ≈ 1.59 kHz`
+- Low-pass corner near `fH = 1 / (2*pi*R2*C2) ≈ 15.9 kHz`
+- Approximate band-pass center near `sqrt(fL*fH) ≈ 5.0 kHz`
+
+Biasing assumptions: no DC supply rails are required because this is a passive small-signal AC filter. Ground node `0` is the only reference. No floating named inputs are allowed; `Vin` is explicitly driven by `V1`.
+
+Operating expectation:
+- At low frequency, `C1` blocks signal, so `Vout` is small.
+- In the midband, the high-pass section has passed the signal while the low-pass section has not yet rolled off strongly, so `Vout` reaches its maximum relative magnitude.
+- At high frequency, `C2` shunts signal to ground, reducing `Vout`.
+- Because the network is fully passive and unbuffered, peak gain will remain below 0 dB and stage loading will slightly soften the ideal first-order corners.
+
+Required analysis:
+- Include `.ac dec 20 1 1e9`
+- Verify that the magnitude response at `Vout` shows clear low-frequency rise, midband pass region centered around a few kHz, and high-frequency roll-off.
+
+Output constraints:
+- The final netlist must contain the exact nodes `Vin` and `Vout`.
+- Use only primitive passive components and the required independent source.
+- Do not introduce active devices, behavioral sources, or macromodels.
+- The circuit should be implementation-ready as a simple passive cascaded RC band-pass filter.

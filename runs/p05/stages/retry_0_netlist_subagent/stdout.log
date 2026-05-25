@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019de90c-703c-7601-9b88-1e3eb3b3dcc9"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* Single-ended NMOS cascode common-source amplifier\nVDD VDD 0 DC 5\nVIN Vin 0 DC 1.2 AC 1\nVBIAS Vbias 0 DC 2.5\nRload VDD Vout 10k\nM1 Ncas Vin 0 0 NMOS W=50u L=1u\nM2 Vout Vbias Ncas Ncas NMOS W=50u L=1u\n.model NMOS NMOS (LEVEL=1 VTO=0.7 KP=100u LAMBDA=0.02)\n.op\n.ac dec 20 1 1e9\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":24706,"cached_input_tokens":21376,"output_tokens":661,"reasoning_output_tokens":516}}

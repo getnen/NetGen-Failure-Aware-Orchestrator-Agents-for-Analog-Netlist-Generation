@@ -1,0 +1,37 @@
+* CMOS comparator netlist: Vin > Vref drives Vout high
+VDDSRC VDD 0 DC 5
+VREFSRC Vref 0 DC 2.5
+VINSRC Vin 0 DC 0 PWL(0ms 0V 1ms 0V 6ms 5V 11ms 5V)
+
+RBIAS VDD Vbias 68k
+MBIAS Vbias Vbias 0 0 NMOS W=10u L=2u
+MTAIL Vtail Vbias 0 0 NMOS W=10u L=2u
+
+MIN_VIN Vx Vin Vtail 0 NMOS W=20u L=1u
+MIN_VREF Vmir Vref Vtail 0 NMOS W=20u L=1u
+
+MPLOAD_REF Vmir Vmir VDD VDD PMOS W=40u L=1u
+MPLOAD_OUT Vx Vmir VDD VDD PMOS W=40u L=1u
+
+MPINV Vout Vx VDD VDD PMOS W=16u L=1u
+MNINV Vout Vx 0 0 NMOS W=4u L=1u
+
+CLOAD Vout 0 20f
+
+.model NMOS NMOS level=1 VTO=0.8 KP=120u GAMMA=0.45 PHI=0.7 LAMBDA=0.05
+.model PMOS PMOS level=1 VTO=-0.9 KP=50u GAMMA=0.45 PHI=0.7 LAMBDA=0.025
+
+.op
+.dc VINSRC 0 5 0.01
+.print dc V(Vin) V(Vref) V(Vx) V(Vout)
+.tran 10u 11ms
+.print tran V(Vin) V(Vref) V(Vx) V(Vout)
+
+.control
+set filetype=ascii
+set wr_singlescale
+dc VINSRC 0 5 0.01
+wrdata <REDACTED> v(Vin) v(Vout)
+quit
+.endc
+.end

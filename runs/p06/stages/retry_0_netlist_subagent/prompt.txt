@@ -1,0 +1,77 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p6.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+Use a classic resistive-load NMOS inverter. A pull-up resistor `R` connects `VDD` to `Vout`, and a single NMOS transistor pulls `Vout` down to ground when `Vin` exceeds threshold. This is explicitly not CMOS, so no PMOS device is used.
+
+**Device/Function List**
+- `VDD`: independent DC supply from `VDD` to `0`, value `5 V`.
+- `Vin`: independent input voltage source from `Vin` to `0`, swept in DC analysis.
+- `R`: pull-up/load resistor from `VDD` to `Vout`, nominally `10k`.
+- `M1`: NMOS pull-down transistor.
+  - Drain: `Vout`
+  - Gate: `Vin`
+  - Source: `0`
+  - Bulk: `0`
+- NMOS model: threshold set to `0.7 V`, e.g. `VTO=0.7`.
+
+**Bias/Reference Strategy**
+Ground node is `0`. `VDD` is fixed at `5 V`. `Vin` must be driven by an explicit voltage source so the gate is never floating. The NMOS source and bulk are tied to ground to avoid body-bias ambiguity.
+
+**Signal or Feedback Path**
+There is no feedback path. The signal path is feed-forward: `Vin` controls the NMOS gate, which modulates pull-down current from `Vout` to ground. `R` continuously pulls `Vout` toward `VDD`.
+
+Expected DC behavior:
+- `Vin < Vth`: NMOS off, `Vout` near `5 V`.
+- `Vin > Vth`: NMOS conducts, `Vout` is pulled low through the NMOS.
+- Transition is gradual due to resistive load and transistor conduction strength.
+
+**SPICE/Netlist Constraints**
+- Final filename must be `p6.cir`.
+- Preserve exact port names: `Vin`, `Vout`.
+- Include:
+  - `VDD VDD 0 DC 5`
+  - `Vin Vin 0 DC ...`
+  - resistor from `VDD` to `Vout`
+  - NMOS `M1 Vout Vin 0 0 <model>`
+  - NMOS model with `VTO=0.7` or equivalent
+  - `.dc Vin 0 5 0.1`
+- Nominal sizing such as `W=10u L=1u` is acceptable.
+
+**Failure Risks To Avoid**
+- Do not add a PMOS transistor.
+- Do not omit the independent `Vin` source; `.dc Vin ...` requires a source named `Vin`.
+- Do not rename `Vin` or `Vout`.
+- Do not leave the NMOS bulk floating.
+- Do not connect the resistor to ground; it must pull up from `VDD` to `Vout`.
+- Do not reverse the intended NMOS role: drain should be `Vout`, source and bulk should be `0`.
+
+=== NORMALIZED SPEC ===
+final_filename: p6.cir
+
+Objective: Create a SPICE netlist for a resistive-load NMOS inverter using input node Vin and output node Vout. The inverter should operate from VDD = 5 V and demonstrate the expected DC transfer behavior: Vout high when Vin is low, and Vout pulled low when Vin exceeds the NMOS threshold.
+
+Topology: Use a single NMOS transistor as the pull-down device and a resistor R as the pull-up load. Connect resistor R from VDD to Vout. Connect the NMOS drain to Vout, gate to Vin, source to ground, and bulk to source/ground. This is not a CMOS inverter; do not add a PMOS device.
+
+Required devices:
+VDD independent DC voltage source from node VDD to 0 with value 5 V.
+Vin independent DC voltage source from node Vin to 0 swept by the required DC analysis.
+R pull-up resistor from VDD to Vout. Use a nominal value such as 10k ohm unless downstream sizing chooses otherwise.
+M1 NMOS transistor with drain Vout, gate Vin, source 0, bulk 0.
+NMOS model with threshold voltage Vth = 0.7 V.
+
+Biasing assumptions: Ground node is 0. VDD is fixed at 5 V. Vin is explicitly driven by an independent voltage source so the input node is not floating. The NMOS bulk is tied to its source at ground. Nominal MOS sizing is acceptable for this easy inverter, for example W=10u and L=1u, unless the final framework uses default dimensions.
+
+Analyses: Include the required DC sweep:
+.dc Vin 0 5 0.1
+
+Output constraints: The final netlist must be saved as p6.cir. The exact node names Vin and Vout must appear in the netlist. The circuit must include explicit independent sources for VDD and Vin, the resistor load R to VDD, the NMOS pull-down transistor, and a valid NMOS model using VTO=0.7 or equivalent SPICE threshold syntax.

@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "retryable": false,
+  "summary": "Output amplitude: 4.81374264173\nOutput stddev: 1.9079278794940575\nTail amplitude: 4.81372965123\nTail stddev: 1.8957286276406105\nDominant frequency: 1600.6412399028688\nDominant magnitude: 2.031136672753759\nPeak count: 15\nPeriod variation: 0.0005715658667651603",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Output amplitude: 4.81374264173\nOutput stddev: 1.9079278794940575\nTail amplitude: 4.81372965123\nTail stddev: 1.8957286276406105\nDominant frequency: 1600.6412399028688\nDominant magnitude: 2.031136672753759\nPeak count: 15\nPeriod variation: 0.0005715658667651603",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019e6000-601f-7d23-9973-7df7d6e91aff"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* Passive RC band-pass filter\nV1 Vin 0 AC 1\nC1 Vin N1 10n\nR1 N1 0 10k\nR2 N1 Vout 10k\nC2 Vout 0 1n\n.ac dec 20 1 1e9\n.print ac vm(Vout) vp(Vout)\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":14914,"cached_input_tokens":0,"output_tokens":379,"reasoning_output_tokens":296}}

@@ -1,0 +1,44 @@
+**Topology Summary**
+Use a classic resistive-load NMOS inverter. A pull-up resistor `R` connects `VDD` to `Vout`, and a single NMOS transistor pulls `Vout` down to ground when `Vin` exceeds threshold. This is explicitly not CMOS, so no PMOS device is used.
+
+**Device/Function List**
+- `VDD`: independent DC supply from `VDD` to `0`, value `5 V`.
+- `Vin`: independent input voltage source from `Vin` to `0`, swept in DC analysis.
+- `R`: pull-up/load resistor from `VDD` to `Vout`, nominally `10k`.
+- `M1`: NMOS pull-down transistor.
+  - Drain: `Vout`
+  - Gate: `Vin`
+  - Source: `0`
+  - Bulk: `0`
+- NMOS model: threshold set to `0.7 V`, e.g. `VTO=0.7`.
+
+**Bias/Reference Strategy**
+Ground node is `0`. `VDD` is fixed at `5 V`. `Vin` must be driven by an explicit voltage source so the gate is never floating. The NMOS source and bulk are tied to ground to avoid body-bias ambiguity.
+
+**Signal or Feedback Path**
+There is no feedback path. The signal path is feed-forward: `Vin` controls the NMOS gate, which modulates pull-down current from `Vout` to ground. `R` continuously pulls `Vout` toward `VDD`.
+
+Expected DC behavior:
+- `Vin < Vth`: NMOS off, `Vout` near `5 V`.
+- `Vin > Vth`: NMOS conducts, `Vout` is pulled low through the NMOS.
+- Transition is gradual due to resistive load and transistor conduction strength.
+
+**SPICE/Netlist Constraints**
+- Final filename must be `p6.cir`.
+- Preserve exact port names: `Vin`, `Vout`.
+- Include:
+  - `VDD VDD 0 DC 5`
+  - `Vin Vin 0 DC ...`
+  - resistor from `VDD` to `Vout`
+  - NMOS `M1 Vout Vin 0 0 <model>`
+  - NMOS model with `VTO=0.7` or equivalent
+  - `.dc Vin 0 5 0.1`
+- Nominal sizing such as `W=10u L=1u` is acceptable.
+
+**Failure Risks To Avoid**
+- Do not add a PMOS transistor.
+- Do not omit the independent `Vin` source; `.dc Vin ...` requires a source named `Vin`.
+- Do not rename `Vin` or `Vout`.
+- Do not leave the NMOS bulk floating.
+- Do not connect the resistor to ground; it must pull up from `VDD` to `Vout`.
+- Do not reverse the intended NMOS role: drain should be `Vout`, source and bulk should be `0`.

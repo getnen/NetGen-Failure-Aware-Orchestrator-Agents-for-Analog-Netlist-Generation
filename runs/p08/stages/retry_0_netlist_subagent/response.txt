@@ -1,0 +1,8 @@
+* Simple NMOS current sink with resistive load
+VDD VDD 0 DC 5
+Vbias Vbias 0 DC 1.0
+Rload VDD Vout 10k
+M1 Vout Vbias 0 0 NMOS W=50u L=1u
+.model NMOS NMOS (VTO=0.6 KP=100u LAMBDA=0.02)
+.op
+.end

@@ -1,0 +1,1 @@
+Record failure signature for future retry routing.

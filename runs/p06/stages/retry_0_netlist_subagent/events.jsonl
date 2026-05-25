@@ -1,0 +1,4 @@
+{"type": "thread.started", "thread_id": "019de910-7954-7d71-8f2e-c858e1fd29aa"}
+{"type": "turn.started"}
+{"type": "item.completed", "item": {"id": "item_0", "type": "agent_message", "text": "* Resistive-load NMOS inverter\nVDD VDD 0 DC 5\nVin Vin 0 DC 0\nR VDD Vout 10k\nM1 Vout Vin 0 0 NMOS W=10u L=1u\n.model NMOS NMOS (LEVEL=1 VTO=0.7 KP=200u LAMBDA=0.02)\n.dc Vin 0 5 0.1\n.end"}}
+{"type": "turn.completed", "usage": {"input_tokens": 24294, "cached_input_tokens": 21376, "output_tokens": 98, "reasoning_output_tokens": 0}}

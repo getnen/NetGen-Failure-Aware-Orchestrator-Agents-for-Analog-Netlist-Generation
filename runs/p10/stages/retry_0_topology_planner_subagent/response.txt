@@ -1,0 +1,38 @@
+**Topology Summary**
+
+Use a first-order passive RC low-pass: `R1 = 1 kOhm` in series from `Vin` to `Vout`, and `C1 = 1 uF` from `Vout` to ground `0`. Drive `Vin` with a ground-referenced independent AC source. This realizes a single-pole low-pass with corner frequency near `1 / (2*pi*R1*C1) ≈ 159 Hz`.
+
+**Device / Function List**
+
+- `V1`: independent AC voltage source, drives `Vin` relative to `0`
+- `R1`: series element between `Vin` and `Vout`; with `C1` sets the pole
+- `C1`: shunt capacitor from `Vout` to `0`; bypasses high-frequency content to ground
+- `0`: only reference node / ground
+
+**Bias / Reference Strategy**
+
+No supply rails or active biasing are needed. Use node `0` as the only reference. The input must not float: the AC source should connect directly to `Vin` and `0`. Small-signal AC excitation is sufficient.
+
+**Signal / Feedback Path**
+
+Signal path is `Vin -> R1 -> Vout`.  
+There is no active feedback loop; the only frequency-dependent return path is the passive shunt through `C1` from `Vout` to ground. At low frequency, `C1` is effectively open so `Vout ~ Vin`; at high frequency, `C1` increasingly shorts `Vout` to ground, reducing output.
+
+**SPICE / Netlist Constraints**
+
+- Preserve exact node names `Vin` and `Vout`
+- Both `Vin` and `Vout` must appear explicitly as named nodes
+- Use only primitive devices: independent source, resistor, capacitor
+- Keep the intended analysis as `.ac dec 20 1 1e9`
+- Do not introduce behavioral elements, controlled sources, or extra parasitics unless explicitly requested
+
+**Failure Risks to Avoid**
+
+- Do not swap resistor/capacitor placement; that can change the response or create a high-pass topology
+- Do not place the output on the wrong side of `R1`; `Vout` must be the RC junction
+- Do not leave `Vin` undriven or floating
+- Do not rename `Vin` or `Vout`
+- Do not add unintended load resistance at `Vout`, since it will shift the pole and reduce low-frequency gain
+- Do not add source resistance in series with the AC source unless that change is intentional, because it alters the effective `R` and cutoff frequency
+
+Expected AC behavior: near-unity gain at low frequency, about `-3 dB` near `159-160 Hz`, and asymptotic `-20 dB/decade` roll-off above the pole.

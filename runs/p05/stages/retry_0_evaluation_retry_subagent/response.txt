@@ -1,0 +1,21 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "retryable": false,
+  "summary": "Voltage Gain (Av) at 100 Hz: 931521377.2379266\nThe circuit functions correctly at 100 Hz.\nWarning: can't find the initialization file spinit.\nUnsupported Ngspice version 45",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Voltage Gain (Av) at 100 Hz: 931521377.2379266\nThe circuit functions correctly at 100 Hz.\nWarning: can't find the initialization file spinit.\nUnsupported Ngspice version 45",
+    "artifacts": {
+      "wrapper_script": "<REDACTED>",
+      "op_file": "<REDACTED>",
+      "checker_script": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

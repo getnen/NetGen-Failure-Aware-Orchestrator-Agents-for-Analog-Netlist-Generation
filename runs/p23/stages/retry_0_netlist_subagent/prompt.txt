@@ -1,0 +1,144 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p23.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For oscillator tasks, expose internal op-amp input nodes named exactly Vinp and Vinn when using a direct transistor-level implementation, because the checker initializes those nodes for startup. Include a single-supply bias/reference near mid-supply, an amplifier stage with sufficient loop gain, and an RC feedback network that closes the intended oscillation loop around Vout. Avoid hard digital-style CMOS inverter output stages or strong clamp devices around the oscillation nodes unless they are intentionally gentle amplitude-control elements, because they often kill startup or create distorted multi-mode oscillation. Do not replace the analog gain stage with behavioral or controlled sources such as B/E/F/G/H elements; keep the oscillator core in primitive transistor-level SPICE. For Wien-bridge structures specifically, prefer one compact analog gain core, one clean bridge tied to a real Vref/mid-supply node, and one simple gain-setting feedback path over multi-stage output chains, split feedback ladders, or commented-out limiter experiments.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Plan `p23.cir` as a 5 V single-supply transistor-level Wien Bridge oscillator with output node exactly named `Vout`. Use one compact analog gain core configured as a non-inverting amplifier around a mid-supply reference. The oscillator loop is the classic Wien bridge from `Vout` to `Vinp`, with negative feedback from `Vout` to `Vinn`.
+
+Use a real transistor-level op-amp-like stage, preferably:
+- NMOS differential input pair with inputs `Vinp` and `Vinn`
+- PMOS current-mirror or active-load devices
+- NMOS tail current source biased from a simple resistor/MOS bias branch
+- A modest common-source voltage gain/output stage driving `Vout`
+- Optional light output resistance or small load capacitor only for convergence
+
+No behavioral amplifier, controlled-source core, ideal op-amp macro, or hard rail-switching inverter should be used.
+
+**Device/Function List**
+
+- `VDD`: independent 5 V supply from `VDD` to `0`
+- Mid-supply divider:
+  - resistor from `VDD` to `Vref`
+  - equal resistor from `Vref` to `0`
+  - bypass capacitor from `Vref` to `0`
+- Gain core:
+  - transistor differential pair using explicit nodes `Vinp` and `Vinn`
+  - active load/current mirror for voltage gain
+  - output stage connected to `Vout`
+  - bias devices/resistors for tail current and output-stage operating point
+- Wien bridge:
+  - `Rw1` and `Cw1` in series from `Vout` to `Vinp`
+  - `Rw2` and `Cw2` in parallel from `Vinp` to `Vref`
+  - use matched values, e.g. `10k` and `10nF`
+- Negative feedback:
+  - `Rf` from `Vout` to `Vinn`
+  - `Rg` from `Vinn` to `Vref`
+  - use gain slightly above 3, e.g. `Rf=22k`, `Rg=10k`
+- Optional gentle amplitude stabilization:
+  - only if needed, use soft transistor/diode degeneration or mild nonlinear feedback
+  - avoid output clamp diodes directly on `Vout`
+
+**Bias/Reference Strategy**
+
+Create `Vref` at approximately 2.5 V using the divider and bypass capacitor. Bias both `Vinp` and `Vinn` near `Vref` at DC. The transistor gain stage must also bias `Vout` near mid-supply so the sinusoid can swing both upward and downward without immediately clipping.
+
+The gain stage must provide enough open-loop gain that the closed-loop non-inverting gain is slightly greater than 3 at startup. Since the Wien network attenuates by about 1/3 at resonance, the loop gain must initially exceed unity.
+
+Include startup asymmetry with `.ic`, for example `Vinp` slightly above `Vref` and/or `Vinn` slightly below `Vref`. There are no external input nodes.
+
+**Signal Or Feedback Path**
+
+Positive frequency-selective path:
+
+`Vout -> series Rw1/Cw1 -> Vinp`, with `Vinp -> parallel Rw2/Cw2 -> Vref`
+
+At approximately:
+
+`f0 = 1 / (2*pi*Rw*Cw)`
+
+with `Rw=10k` and `Cw=10nF`, expect about `1.59 kHz`.
+
+Negative gain-setting path:
+
+`Vout -> Rf -> Vinn -> Rg -> Vref`
+
+This sets the non-inverting closed-loop gain near:
+
+`1 + Rf/Rg = 3.2`
+
+which is slightly above the Wien startup requirement.
+
+**SPICE/Netlist Constraints**
+
+- Preserve node names `Vout`, `Vinp`, `Vinn`, `Vref`, `VDD`, and `0`
+- Use primitive MOS/BJT/resistor/capacitor/diode devices only for the active gain stage
+- Do not use `E`, `F`, `G`, `H`, behavioral sources, ideal limiters, or op-amp subcircuit macros
+- Required analysis: `.tran 1u 5m`
+- MOS bulk convention: NMOS bulks to their sources or lowest local potential; PMOS bulks to their sources or highest local potential
+- Keep the bridge centered around `Vref`, not ground
+- Keep any convergence capacitor at `Vout` small enough not to suppress oscillation
+
+**Failure Risks To Avoid**
+
+- Too little gain: oscillation decays to DC near `Vref`
+- Too much gain or hard limiting: `Vout` clips flat at 0 V or 5 V
+- Referencing the Wien shunt branch to ground instead of `Vref`: wrong DC bias and likely failed startup
+- Omitting explicit `Vinp`/`Vinn`: startup initialization becomes difficult
+- Using an inverter-like CMOS stage as the main oscillator core: produces rail switching instead of a sinusoid
+- Adding extra output buffers or multiple feedback ladders: creates unwanted poles and competing loop behavior
+- Oversized output/load capacitance: shifts phase and can suppress the Wien oscillation
+- Direct clamp diodes on `Vout`: distort the sine wave and violate the clean Wien bridge intent
+
+=== NORMALIZED SPEC ===
+final_filename: p23.cir
+
+Objective: Implement a 5 V single-supply Wien Bridge oscillator whose output node Vout develops a visible sustained sinusoidal oscillation during `.tran 1u 5m`. There are no external input nodes. The final netlist must include node Vout.
+
+Topology: Use an op-amp-like high-gain voltage-controlled gain stage powered from VDD=5 V and ground, configured as a non-inverting Wien Bridge oscillator around a mid-supply reference. Create a mid-supply node Vref at approximately 2.5 V with a resistor divider and bypass capacitor. The Wien positive-feedback network connects from Vout to the op-amp non-inverting input Vinp using a series RC branch, with a parallel RC branch from Vinp to Vref. This gives zero phase shift and 1/3 feedback gain at the oscillation frequency. The negative-feedback network connects from Vout to the op-amp inverting input Vinn and from Vinn to Vref, setting closed-loop gain slightly above 3 for startup.
+
+Required devices:
+- Independent DC supply source VDD from VDD to 0, value 5 V.
+- Mid-supply bias divider: two equal resistors from VDD to Vref and Vref to 0, plus a bypass capacitor from Vref to 0.
+- High-gain op-amp/gain-stage element powered or behaviorally limited to the 0 to 5 V rails. Its internal differential input nodes must be named Vinp and Vinn so startup asymmetry can be initialized or injected there.
+- Wien network:
+  - Rw1 and Cw1 in series from Vout to Vinp.
+  - Rw2 and Cw2 in parallel from Vinp to Vref.
+  - Choose Rw1=Rw2 and Cw1=Cw2 for a clean oscillation frequency, e.g. R=10 kOhm and C=10 nF, giving about 1.59 kHz.
+- Negative feedback:
+  - Rg from Vinn to Vref.
+  - Rf from Vout to Vinn.
+  - Set non-inverting gain slightly above 3, e.g. Rg=10 kOhm and Rf=22 kOhm to start oscillation. If amplitude stabilization is included, use diodes or a nonlinear limiter in the feedback/gain stage so Vout remains bounded inside the 0 to 5 V supply.
+- Optional small capacitor from Vout to ground or output resistance only if needed for numerical convergence, not large enough to suppress oscillation.
+
+Biasing assumptions:
+- Single-supply operation requires all AC signals to oscillate around Vref, not ground.
+- Vinp and Vinn should bias near Vref at the operating point.
+- Vout should bias near mid-supply and swing periodically without clipping flat at 0 V or 5 V for the whole latter half of the transient.
+- For any MOS implementation, NMOS bulks connect to their sources, PMOS bulks connect to their sources, and device sizing should be nominal unless extra gain is needed.
+
+Startup requirements:
+- Include an `.ic` or equivalent initialization that creates a small mismatch between Vinp and Vinn, for example Vinp slightly above Vref and/or Vinn slightly below Vref.
+- The oscillator must not rely on an external input source because the task has no input nodes.
+- The gain should be slightly above the Barkhausen threshold at startup so the Wien frequency component grows from the initial mismatch.
+
+Required analysis:
+- `.tran 1u 5m`
+
+Expected verification behavior:
+- Plot or measure V(Vout) during transient.
+- Vout should show a sustained periodic waveform in the latter portion of the 5 ms run.
+- The expected oscillation frequency is approximately `1/(2*pi*Rw*Cw)` if equal Wien components are used.
+- The waveform should be centered near 2.5 V with visible amplitude and should not decay to DC.

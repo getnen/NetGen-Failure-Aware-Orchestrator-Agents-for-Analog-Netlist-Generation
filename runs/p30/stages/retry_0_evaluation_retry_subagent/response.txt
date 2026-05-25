@@ -1,0 +1,22 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "failure_family": "",
+  "repair_scope": "done",
+  "retryable": false,
+  "summary": "Reference frequency: 10000000.000000002\nOutput frequency: 10024743.269629724\nReference crossings: 93\nOutput crossings: 92\nOutput swing: 1.799999981045752",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Reference frequency: 10000000.000000002\nOutput frequency: 10024743.269629724\nReference crossings: 93\nOutput crossings: 92\nOutput swing: 1.799999981045752",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

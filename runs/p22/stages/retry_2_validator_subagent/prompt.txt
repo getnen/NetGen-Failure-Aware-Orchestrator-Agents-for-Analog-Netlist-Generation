@@ -1,0 +1,71 @@
+You are the validator/fixer subagent.
+Repair syntax issues in this SPICE netlist if needed.
+Return ONLY corrected netlist text.
+Keep behavior equivalent when possible.
+Keep the circuit in primitive-device ngspice form only: R, C, L, V, I, D, Q, M, X where needed.
+Do not introduce behavioral or controlled sources such as B, E, F, G, or H elements.
+Ensure there is one .end at the end.
+
+=== NETLIST TO VALIDATE ===
+* 5V single-supply transistor RC phase-shift oscillator
+VDD VDD 0 DC 5
+
+RBIAS1 VDD Vinp 100k
+RBIAS2 Vinp 0 47k
+CSTART Vinp 0 1p
+
+* Q1 Vout Vinp emit NPN
+RC VDD Vout 2.2k
+RE emit 0 330
+CE emit 0 47u
+
+C1 Vout rc1 10n
+R1 rc1 0 6.8k
+C2 rc1 rc2 10n
+R2 rc2 0 6.8k
+C3 rc2 Vinn 10n
+R3 Vinn Vinp 6.8k
+RFB Vinn Vinp 1Meg
+
+.model NPN NPN IS=1e-15 BF=200 VAF=100 CJE=2p CJC=1p TF=0.3n
+
+.ic V(Vinp)=1.62 V(Vinn)=1.63 V(rc1)=1.4 V(rc2)=1.5 V(Vout)=2.8 V(emit)=0.95
+.tran 1u 20m uic
+.end
+
+
+=== REPAIR GUIDANCE ===
+The previous attempt was evaluated functionally, not just syntactically. Repair the circuit so the measured behavior matches the task intent. If the evaluator reports topology-level failure, change the topology rather than only tweaking values. If a required input node appears only as an internal node, add the missing independent source. If the evaluator reports the same failure repeatedly, avoid regenerating the identical circuit.
+
+Use evaluator feedback as a design-debug signal. If the report says the circuit is not functioning correctly, identify the missing functional mechanism: biasing, load choice, feedback polarity, reference level, insufficient gain, or absent frequency-selective element. For waveform tasks, repair the netlist so the requested waveform or response is visible in the configured analysis rather than merely producing a valid operating point.
+
+For oscillator retry failures, if the report says 'IC on non-existent node - vinp/vinn' or amplitude is too small, the startup nodes were not exposed or the loop gain/phase conditions were wrong. Repair by naming the internal differential input nodes Vinp and Vinn, centering the bias network near mid-supply, ensuring the feedback network connects to the correct op-amp input polarity, and removing overly hard limiter/clamp behavior that suppresses or distorts the analog oscillation. If the retry has drifted into behavioral or controlled-source amplifier shortcuts, replace them with a real biased transistor gain stage instead of tuning the shortcut.
+
+=== TOPOLOGY ISSUES DETECTED BEFORE SIMULATION ===
+- missing_explicit_mid_supply_reference_source
+- missing_phase_shift_reference_ladder
+Repair the topology before returning the netlist.
+
+=== REPAIR FOCUS ===
+General oscillator/VCO repair focus: preserve startup-capable internal nodes, include an explicit mid-supply reference source, maintain correct feedback polarity, give the active stage enough loop gain to overcome passive losses, and avoid output rail clamps or behavioral/controlled-source shortcuts that suppress analog startup. For RC phase-shift structures, use an inverting gain stage with a three-section RC ladder referenced to mid-supply. Add a real mid-supply reference source for single-supply oscillators and tie feedback/bias networks to it. Reference the RC phase-shift ladder to a real mid-supply node instead of leaving it floating.
+
+=== FUNCTIONAL EVALUATION FEEDBACK ===
+Functional evaluation failed on retry 1.
+Failure type: functional_error
+Suggested next stage: validator_subagent
+
+Evaluator report:
+Output amplitude: 0.01999999
+Output stddev: 0.005777248374652402
+Tail amplitude: 0.01000589804
+Tail stddev: 0.0028887720398555316
+Dominant frequency: 99.93106725191397
+Dominant magnitude: 0.0031853270833581363
+Peak count: 0
+Period variation: inf
+
+Evaluator-aware repair hint for Oscillator/VCO transient failure:
+- The direct transient evaluator inspected the steady-state half of the waveform and did not find stable periodic oscillation.
+- Treat low peak count, tiny tail amplitude, or infinite period variation as a startup or loop-gain problem: preserve explicit Vinp/Vinn and Vout nodes, keep the amplifier biased near mid-supply, and ensure the active stage can overcome the RC network loss.
+- If a ripple exists at Vout but periodicity never settles, the loop likely has the right rough frequency range but insufficient gain margin or incorrect feedback polarity.
+Repair the current netlist with minimal changes when the architecture is salvageable.

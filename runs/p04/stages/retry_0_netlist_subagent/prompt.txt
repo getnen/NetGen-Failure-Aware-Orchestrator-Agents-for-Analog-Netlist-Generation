@@ -1,0 +1,92 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p4.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+Single-stage NMOS common-gate amplifier. Use one NMOS `M1` with drain at `Vout`, source at `Vin`, gate at `Vbias`, and bulk tied to `Vin`. A resistor `Rload` connects from `VDD` to `Vout`, forming the drain load. Supply is `VDD = 5 V` referenced to ground node `0`.
+
+**Device/Function List**
+- `M1`: NMOS amplifying device, common-gate configuration.
+  - Drain: `Vout`
+  - Gate: `Vbias`
+  - Source: `Vin`
+  - Bulk: `Vin`
+  - Model target: `Vth=0.7V`, `kp=100u`, `W=50u`, `L=1u`
+- `Rload`: resistive drain load from `VDD` to `Vout`, nominal `47k`, allowed `10k-100k`.
+- `VDD`: independent DC voltage source from `VDD` to `0`, value `5 V`.
+- `Vbias`: independent DC gate-bias source from `Vbias` to `0`, preferably around `1.8 V`.
+- `Vin`: independent input voltage source from `Vin` to `0`, with DC bias around `0.8 V` and `AC 1`.
+
+**Bias/Reference Strategy**
+Set `Vbias` above threshold relative to `Vin`, for example `Vbias = 1.8 V` and `Vin DC = 0.8 V`, giving `VGS = 1.0 V` and overdrive near `0.3 V`. Choose `Rload = 47k` as the nominal load. The expected operating point should keep `Vout` high enough for saturation:
+
+`VDS >= VGS - Vth`
+
+Since `VDS = Vout - Vin`, avoid biasing or load current choices that pull `Vout` too close to `Vin`.
+
+**Signal or Feedback Path**
+Input signal is applied directly at the source node `Vin`. Gate node `Vbias` is AC-grounded through its independent DC bias source unless otherwise specified by the simulator. Small-signal current variations through `M1` are converted to output voltage by `Rload` at `Vout`.
+
+No intentional feedback network is required. The common-gate behavior provides a low input impedance at `Vin` and non-inverting voltage gain from `Vin` to `Vout` under proper bias.
+
+**SPICE/Netlist Constraints**
+- Final file should be `p4.cir`.
+- Preserve exact node names: `Vin`, `Vbias`, `Vout`.
+- `Vin` must be driven by an explicit independent voltage source connected from `Vin` to `0`.
+- `Vbias` must be driven by an explicit independent voltage source connected from `Vbias` to `0`.
+- `Vout` must be the drain of `M1`.
+- `Rload` must connect from `VDD` to `Vout`.
+- Bulk of `M1` must connect to `Vin`, not `0`.
+- Include `.op`.
+- Include `.ac dec 20 1 1e9`.
+- Set the input source as `AC 1` so `Vout` directly reports small-signal gain.
+- Do not use subcircuits or placeholder devices.
+
+**Failure Risks To Avoid**
+- Do not apply `Vin` at the gate; this must be common-gate, with signal at the source.
+- Do not tie NMOS bulk to ground; it must be tied to `Vin`.
+- Do not omit the explicit `Vin` voltage source.
+- Do not leave `Vbias` floating or replace it with a parameter only.
+- Do not choose `Vin DC` too close to or above `Vbias - Vth`, or `M1` may be off.
+- Do not choose a load/bias point that pulls `Vout` below the saturation requirement.
+- Do not rename required ports, especially `Vin`, `Vbias`, and `Vout`.
+
+=== NORMALIZED SPEC ===
+final_filename: p4.cir
+
+Objective: Create a single-stage NMOS common-gate amplifier with the input signal applied directly at the source node named Vin and the amplified output taken at node Vout.
+
+Topology: Use one NMOS transistor M1 in common-gate configuration. Connect M1 drain to Vout, source to Vin, gate to Vbias, and bulk to Vin. Use a resistive load R from VDD to Vout. The supply is VDD = 5 V with ground node 0.
+
+Required devices:
+NMOS M1 using the provided NMOS model parameters: Vth=0.7V, kp=100u, W=50u, L=1u.
+Resistive load Rload from VDD to Vout, choose a value in the allowed 10k-100k range, nominally 47k.
+Independent DC supply VDD from VDD to 0 with value 5 V.
+Independent gate-bias source Vbias from node Vbias to 0.
+Independent input source Vin from node Vin to 0, with a DC source level suitable for biasing and a small-signal AC magnitude.
+
+Biasing assumptions:
+Set Vbias >= 1.2 V as required, preferably around 1.8 V to 2.2 V.
+Set the DC value of Vin below Vbias by more than Vth so the NMOS conducts, for example Vin DC around 0.8 V with Vbias around 1.8 V.
+Ensure the operating point keeps M1 in saturation: Vout should remain high enough that VDS >= VGS - Vth.
+Bulk of M1 must be tied to its source at Vin.
+
+Analyses:
+Include .op.
+Include .ac dec 20 1 1e9.
+Set the Vin source with AC 1 so Vout directly represents small-signal gain.
+
+Output constraints:
+The final SPICE netlist must include exact nodes Vin, Vbias, and Vout.
+Vin must be electrically driven by an explicit independent voltage source connected to node Vin.
+Vbias must be electrically driven by an explicit independent voltage source connected to node Vbias.
+Vout must be the drain/output node of M1 and connected to the resistive load.
+Do not use subcircuits or placeholder devices.

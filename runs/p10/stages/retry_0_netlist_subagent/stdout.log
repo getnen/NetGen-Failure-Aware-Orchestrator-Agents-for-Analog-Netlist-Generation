@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019e5ffe-7427-7d73-a24f-fcfa126f9861"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* First-order RC low-pass filter\nV1 Vin 0 AC 1\nR1 Vin Vout 1k\nC1 Vout 0 1u\n.ac dec 20 1 1e9\n.print ac vm(Vout) vp(Vout)\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":14351,"cached_input_tokens":3840,"output_tokens":310,"reasoning_output_tokens":246}}

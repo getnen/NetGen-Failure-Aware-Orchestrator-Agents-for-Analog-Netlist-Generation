@@ -1,0 +1,29 @@
+* Inverting summing amplifier using primitive MOS opamp
+VDD Vdd 0 DC 5
+VSS Vss 0 DC -5
+V1 Vin1 0 DC 1
+V2 Vin2 0 DC 1
+R1 Vin1 Vsum 10k
+R2 Vin2 Vsum 10k
+Rf Vout Vsum 10k
+Itail Ntail Vss DC 100u
+M1 Nd1 0 Ntail Vss NMOS L=1u W=100u
+M2 Nout1 Vsum Ntail Vss NMOS L=1u W=100u
+M3 Nd1 Nd1 Vdd Vdd PMOS L=1u W=200u
+M4 Nout1 Nd1 Vdd Vdd PMOS L=1u W=200u
+M5 Vout Nout1 Vdd Vdd PMOS L=1u W=500u
+M6 Vout Nout1 Vss Vss NMOS L=1u W=250u
+Rload Vout 0 1Meg
+Ccomp Nout1 Vout 2p
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=200u LAMBDA=0.02
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02
+.op
+
+.control
+set filetype=ascii
+set wr_singlescale
+op
+wrdata <REDACTED> v(Vout)
+quit
+.endc
+.end

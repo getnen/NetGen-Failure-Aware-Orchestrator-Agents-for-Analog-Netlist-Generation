@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Amplifier
+Task: A three-stage amplifier with single input and output (each stage is common-source with resistive load)

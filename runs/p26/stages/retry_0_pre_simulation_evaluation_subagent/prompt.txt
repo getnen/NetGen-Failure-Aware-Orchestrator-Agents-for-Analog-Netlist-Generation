@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Adder
+Task: An Opamp adder to make Vout=-(Vin1+Vin2)

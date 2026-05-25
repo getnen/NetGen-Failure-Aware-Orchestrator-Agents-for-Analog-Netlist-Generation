@@ -1,0 +1,38 @@
+* 5V single-supply MOS RC phase-shift oscillator
+VDD VDD 0 DC 5
+RREF1 VDD VREF 100k
+RREF2 VREF 0 100k
+CREF VREF 0 100n
+
+M1 d1 Vinp tail 0 NMOS W=300u L=1u
+M2 d2 Vinn tail 0 NMOS W=300u L=1u
+M3 d1 d1 VDD VDD PMOS W=500u L=1u
+M4 d2 d1 VDD VDD PMOS W=500u L=1u
+MTAIL tail nbias 0 0 NMOS W=120u L=1u
+RNB1 VDD nbias 330k
+RNB2 nbias 0 220k
+
+M5 Vout d2 0 0 NMOS W=900u L=1u
+M6 Vout pbias VDD VDD PMOS W=2200u L=1u
+RPB1 VDD pbias 180k
+RPB2 pbias 0 330k
+Cdom d2 Vout 2p
+
+RDCOUT Vout VREF 1Meg
+
+C1 Vout n1 1n
+R1 n1 VREF 6.8k
+C2 n1 n2 1n
+R2 n2 VREF 6.8k
+C3 n2 Vinp 1n
+R3 Vinp VREF 6.8k
+RINP Vinp VREF 1Meg
+RVINN Vinn VREF 1k
+
+.ic V(n1)=2.54 V(n2)=2.46 V(Vinp)=2.53 V(d2)=2.4 V(Vout)=2.6
+
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=250u LAMBDA=0.02 PHI=0.6 GAMMA=0.4
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02 PHI=0.6 GAMMA=0.4
+
+.tran 1u 5m
+.end

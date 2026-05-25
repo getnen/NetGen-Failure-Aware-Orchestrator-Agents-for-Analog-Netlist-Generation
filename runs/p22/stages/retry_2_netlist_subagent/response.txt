@@ -1,0 +1,32 @@
+* 5V single-supply CMOS RC phase-shift oscillator
+VDD VDD 0 DC 5
+RVC1 VDD Vcm 100k
+RVC2 Vcm 0 100k
+CVCM Vcm 0 10u
+VVINP Vinp Vcm DC 0
+
+ITAIL tail 0 DC 200u
+M1 nd1 Vinp tail tail NMOS L=1u W=80u
+M2 nd2 Vinn tail tail NMOS L=1u W=80u
+M3 nd1 nd1 VDD VDD PMOS L=1u W=160u
+M4 nd2 nd1 VDD VDD PMOS L=1u W=160u
+
+RLOAD VDD Vout 18k
+M5 Vout nd2 0 0 NMOS L=1u W=120u
+RBIASO Vout Vcm 220k
+
+C1 Vout n1 10n
+R1 n1 Vcm 10k
+C2 n1 n2 10n
+R2 n2 Vcm 10k
+C3 n2 n3 10n
+R3 n3 Vcm 10k
+RVIN n3 Vinn 100
+RBVIN Vinn Vcm 5Meg
+
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=250u LAMBDA=0.02
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02
+
+.ic V(Vout)=2.7 V(n1)=2.55 V(n2)=2.45 V(n3)=2.52 V(Vinn)=2.49 V(Vinp)=2.51 V(nd2)=2.4
+.tran 1u 5m
+.end

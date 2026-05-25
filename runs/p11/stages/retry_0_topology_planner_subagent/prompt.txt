@@ -1,0 +1,63 @@
+You are the topology planning subagent for a SPICE generation framework.
+Create a concise circuit topology plan before SPICE is written.
+Do not write a full netlist. Describe the devices, node roles, bias strategy, feedback paths, and expected analysis behavior.
+Preserve requested port names exactly and call out topology risks that the netlist writer must avoid.
+Stay within primitive-device SPICE planning assumptions; do not suggest behavioral or controlled-source shortcuts unless the task explicitly requires them.
+
+=== TASK ===
+Type: HighPass
+Description: a passive high-pass filter
+Inputs: Vin
+Outputs: Vout
+
+=== NORMALIZED SPEC ===
+final_filename: p11.cir
+
+Objective:
+Implement a primitive passive RC high-pass filter with input node Vin and output node Vout. The circuit must pass high-frequency content from Vin to Vout while attenuating low-frequency and DC content. With C1 = 1 uF and R1 = 1 kOhm, the cutoff should be about 1 / (2*pi*R*C) ≈ 159 Hz.
+
+Topology:
+Use the standard first-order passive high-pass arrangement:
+- C1 in series between Vin and Vout
+- R1 from Vout to GND (node 0)
+
+Required devices:
+- Independent AC source V1 driving the named input node: V1 from Vin to 0 with AC magnitude 1
+- Capacitor C1 = 1uF
+- Resistor R1 = 1k
+
+Key interconnectivity:
+- Vin is the driven input node and must be connected directly to the positive terminal of V1
+- The negative terminal of V1 goes to node 0
+- C1 connects from Vin to Vout
+- R1 connects from Vout to node 0
+- Vout is taken at the junction of C1 and R1
+
+Biasing assumptions:
+- No supply rails are required; this is a passive source-referenced filter
+- Ground reference is SPICE node 0
+- No DC bias network is needed because the requested analysis is AC small-signal and the resistor provides the output return path
+
+Analysis required:
+- Run .ac dec 20 1 1e9
+- Expected behavior:
+  - Strong attenuation at low frequency and at DC
+  - Approximately +20 dB/dec magnitude rise below cutoff
+  - About -3 dB at roughly 160 Hz
+  - Magnitude approaches 0 dB at high frequency because the output is across R1 in a passive divider that tends to unity as capacitor reactance becomes small
+
+Output constraints:
+- Preserve node names exactly: Vin and Vout
+- Both Vin and Vout must appear in the final netlist
+- Use primitive SPICE devices only
+- Do not replace the RC network with behavioral elements or controlled sources
+- Keep the source explicit; Vin must not be left floating or implied internally
+
+
+=== OUTPUT CONTRACT ===
+- Topology summary
+- Device/function list
+- Bias/reference strategy
+- Signal or feedback path
+- SPICE/netlist constraints
+- Failure risks to avoid

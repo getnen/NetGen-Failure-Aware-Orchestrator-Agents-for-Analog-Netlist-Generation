@@ -1,0 +1,62 @@
+You are the topology planning subagent for a SPICE generation framework.
+Create a concise circuit topology plan before SPICE is written.
+Do not write a full netlist. Describe the devices, node roles, bias strategy, feedback paths, and expected analysis behavior.
+Preserve requested port names exactly and call out topology risks that the netlist writer must avoid.
+
+=== TASK ===
+Type: Opamp
+Description: A single-stage differential common-source opamp with dual resistive loads, tail current, and a single output
+Inputs: Vinp, Vinn
+Outputs: Vout
+
+=== NORMALIZED SPEC ===
+final_filename: p18.cir
+
+Objective: implement a single-stage differential common-source opamp with inputs `Vinp` and `Vinn`, single-ended output `Vout`, 5 V supply, balanced DC bias at `Vinp=Vinn=2.5V`, and `.op` verification.
+
+Topology: NMOS differential pair `M1`/`M2` with a tail NMOS current source `M5`. Use PMOS current-mirror active load `M3`/`M4` per domain constraints, with `M3` diode-connected and `M4` mirroring current into the single-ended output branch. `Vout` is the high-impedance drain node of `M2` and `M4`.
+
+Required devices and interconnect:
+- `VDD` independent DC source from node `VDD` to `0`, value `5V`.
+- `Vinp` independent DC source from node `Vinp` to `0`, value `2.5V`.
+- `Vinn` independent DC source from node `Vinn` to `0`, value `2.5V`.
+- Tail bias source `Vbias` from node `Vbias_tail` to `0`, nominal `1.2V`.
+- `M1`: NMOS input transistor, drain at PMOS diode/mirror node `Nmirror`, gate `Vinp`, source `Ntail`, bulk tied to `Ntail`.
+- `M2`: NMOS input transistor, drain `Vout`, gate `Vinn`, source `Ntail`, bulk tied to `Ntail`.
+- `M3`: PMOS diode-connected load, source `VDD`, gate `Nmirror`, drain `Nmirror`, bulk tied to `VDD`.
+- `M4`: PMOS mirror load, source `VDD`, gate `Nmirror`, drain `Vout`, bulk tied to `VDD`.
+- `M5`: NMOS tail current source, drain `Ntail`, gate `Vbias_tail`, source `0`, bulk tied to `0`.
+
+Model assumptions:
+- NMOS model name `NMOS`, `VTO=0.7`, `KP=100u`.
+- PMOS model name `PMOS`, `VTO=-0.7`, `KP=50u`.
+- Use nominal sizing:
+  - NMOS `M1`, `M2`, `M5`: `W=50u`, `L=1u`.
+  - PMOS `M3`, `M4`: `W=100u`, `L=1u`.
+
+Biasing assumptions:
+- With `Vinp=Vinn=2.5V` and `Vbias_tail≈1.2V`, `M5` should conduct a real tail current and keep `Ntail` above ground with enough `VDS` headroom.
+- The tail current should split approximately evenly through `M1` and `M2`.
+- `M3` is diode-connected, establishing the PMOS mirror gate voltage.
+- `M4` sources mirrored current into `Vout`; `M2` sinks the corresponding branch current.
+- `Vout` should settle at a valid high-impedance operating point between ground and `VDD`, not rail-clamped.
+- All MOSFETs should have nonzero drain current at the DC operating point.
+
+Analysis:
+- Include `.op`.
+- The `.op` result should confirm active conduction in `M1` through `M5`, balanced branch currents at equal inputs, and a valid DC value on `Vout`.
+
+Output constraints:
+- The final netlist must include nodes `Vinp`, `Vinn`, and `Vout` exactly.
+- `Vinp` and `Vinn` must be explicitly driven by independent DC sources.
+- Do not leave any requested input node floating.
+- Do not use subcircuits or hidden bias sources beyond explicitly named independent sources.
+
+
+=== OUTPUT CONTRACT ===
+- Topology summary
+- Device/function list
+- Bias/reference strategy
+- Signal or feedback path
+- SPICE/netlist constraints
+- Failure risks to avoid

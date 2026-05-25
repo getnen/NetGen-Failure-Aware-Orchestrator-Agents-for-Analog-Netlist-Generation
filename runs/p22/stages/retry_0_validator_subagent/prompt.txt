@@ -1,0 +1,63 @@
+You are the validator/fixer subagent.
+Repair syntax issues in this SPICE netlist if needed.
+Return ONLY corrected netlist text.
+Keep behavior equivalent when possible.
+Keep the circuit in primitive-device ngspice form only: R, C, L, V, I, D, Q, M, X where needed.
+Do not introduce behavioral or controlled sources such as B, E, F, G, or H elements.
+Ensure there is one .end at the end.
+
+=== NETLIST TO VALIDATE ===
+* 5V single-supply MOS RC phase-shift oscillator
+VDD VDD 0 DC 5
+RREF1 VDD VREF 100k
+RREF2 VREF 0 100k
+CREF VREF 0 100n
+
+M1 d1 Vinp tail 0 NMOS W=300u L=1u
+M2 d2 Vinn tail 0 NMOS W=300u L=1u
+M3 d1 d1 VDD VDD PMOS W=500u L=1u
+M4 d2 d1 VDD VDD PMOS W=500u L=1u
+MTAIL tail nbias 0 0 NMOS W=120u L=1u
+RNB1 VDD nbias 330k
+RNB2 nbias 0 220k
+
+M5 Vout d2 0 0 NMOS W=900u L=1u
+M6 Vout pbias VDD VDD PMOS W=2200u L=1u
+RPB1 VDD pbias 180k
+RPB2 pbias 0 330k
+Cdom d2 Vout 2p
+
+RDCOUT Vout VREF 1Meg
+
+C1 Vout n1 1n
+R1 n1 VREF 6.8k
+C2 n1 n2 1n
+R2 n2 VREF 6.8k
+C3 n2 Vinp 1n
+R3 Vinp VREF 6.8k
+RINP Vinp VREF 1Meg
+RVINN Vinn VREF 1k
+
+.ic V(n1)=2.54 V(n2)=2.46 V(Vinp)=2.53 V(d2)=2.4 V(Vout)=2.6
+
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=250u LAMBDA=0.02 PHI=0.6 GAMMA=0.4
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02 PHI=0.6 GAMMA=0.4
+
+.tran 1u 5m
+.end
+
+
+=== REPAIR GUIDANCE ===
+The previous attempt was evaluated functionally, not just syntactically. Repair the circuit so the measured behavior matches the task intent. If the evaluator reports topology-level failure, change the topology rather than only tweaking values. If a required input node appears only as an internal node, add the missing independent source. If the evaluator reports the same failure repeatedly, avoid regenerating the identical circuit.
+
+Use evaluator feedback as a design-debug signal. If the report says the circuit is not functioning correctly, identify the missing functional mechanism: biasing, load choice, feedback polarity, reference level, insufficient gain, or absent frequency-selective element. For waveform tasks, repair the netlist so the requested waveform or response is visible in the configured analysis rather than merely producing a valid operating point.
+
+For oscillator retry failures, if the report says 'IC on non-existent node - vinp/vinn' or amplitude is too small, the startup nodes were not exposed or the loop gain/phase conditions were wrong. Repair by naming the internal differential input nodes Vinp and Vinn, centering the bias network near mid-supply, ensuring the feedback network connects to the correct op-amp input polarity, and removing overly hard limiter/clamp behavior that suppresses or distorts the analog oscillation. If the retry has drifted into behavioral or controlled-source amplifier shortcuts, replace them with a real biased transistor gain stage instead of tuning the shortcut.
+
+=== TOPOLOGY ISSUES DETECTED BEFORE SIMULATION ===
+- missing_explicit_mid_supply_reference_source
+- missing_startup_initial_condition_for_differential_inputs
+Repair the topology before returning the netlist.
+
+=== REPAIR FOCUS ===
+General oscillator/VCO repair focus: preserve startup-capable internal nodes, include an explicit mid-supply reference source, maintain correct feedback polarity, give the active stage enough loop gain to overcome passive losses, and avoid output rail clamps or behavioral/controlled-source shortcuts that suppress analog startup. For RC phase-shift structures, use an inverting gain stage with a three-section RC ladder referenced to mid-supply. Add a real mid-supply reference source for single-supply oscillators and tie feedback/bias networks to it.

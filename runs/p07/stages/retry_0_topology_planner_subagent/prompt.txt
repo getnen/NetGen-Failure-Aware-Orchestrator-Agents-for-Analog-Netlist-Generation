@@ -1,0 +1,39 @@
+You are the topology planning subagent for a SPICE generation framework.
+Create a concise circuit topology plan before SPICE is written.
+Do not write a full netlist. Describe the devices, node roles, bias strategy, feedback paths, and expected analysis behavior.
+Preserve requested port names exactly and call out topology risks that the netlist writer must avoid.
+Stay within primitive-device SPICE planning assumptions; do not suggest behavioral or controlled-source shortcuts unless the task explicitly requires them.
+
+=== TASK ===
+Type: Inverter
+Description: A logical inverter with 1 NMOS and 1 PMOS
+Inputs: Vin
+Outputs: Vout
+
+=== NORMALIZED SPEC ===
+final_filename: p7.cir
+
+Objective: create a 5 V logical inverter using exactly one NMOS and one PMOS, with input node Vin and output node Vout preserved exactly.
+
+Topology: implement a standard CMOS inverter. Connect the PMOS as the pull-up device from VDD to Vout, and the NMOS as the pull-down device from Vout to ground. Tie both gates directly to Vin so that low Vin turns the PMOS on and NMOS off, driving Vout high, while high Vin turns the NMOS on and PMOS off, driving Vout low.
+
+Required devices:
+Independent DC supply VDD from node VDD to 0 with value 5 V.
+Independent input source driving Vin from node Vin to 0, suitable for DC sweep.
+One NMOS transistor named with drain at Vout, gate at Vin, source at 0, bulk tied to source at 0, using NMOS model with Vth = 0.7 V.
+One PMOS transistor named with source at VDD, gate at Vin, drain at Vout, bulk tied to source at VDD, using PMOS model with Vth = -0.7 V.
+
+Biasing assumptions: VDD is fixed at 5 V. Vin is explicitly driven by an independent voltage source and swept from 0 V to 5 V. Ground node is 0. Use nominal MOS sizing unless otherwise specified, for example equal default W/L values are acceptable for this easy inverter brief.
+
+Analyses: include `.dc Vin 0 5 0.1` to sweep the independent input source named Vin from 0 V to 5 V in 0.1 V increments and observe the voltage transfer behavior at Vout.
+
+Output constraints: the final SPICE netlist must be saved as `p7.cir`. The exact node names `Vin` and `Vout` must appear in the netlist. No floating input nodes are allowed; Vin must be electrically driven by the independent input source.
+
+
+=== OUTPUT CONTRACT ===
+- Topology summary
+- Device/function list
+- Bias/reference strategy
+- Signal or feedback path
+- SPICE/netlist constraints
+- Failure risks to avoid

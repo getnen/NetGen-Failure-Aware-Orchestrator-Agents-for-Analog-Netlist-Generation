@@ -1,0 +1,1 @@
+Evaluate task 11 (HighPass) and decide whether to loop to validator_subagent or spec_normalizer_subagent based on the failure class.

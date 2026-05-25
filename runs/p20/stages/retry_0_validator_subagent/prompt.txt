@@ -1,0 +1,48 @@
+You are the validator/fixer subagent.
+Repair syntax issues in this SPICE netlist if needed.
+Return ONLY corrected netlist text.
+Keep behavior equivalent when possible.
+Ensure there is one .end at the end.
+
+=== NETLIST TO VALIDATE ===
+* 5 V CMOS two-stage differential opamp
+VDD VDD 0 DC 5
+Vinp Vinp 0 DC 2.5 AC 0.5
+Vinn Vinn 0 DC 2.5 AC -0.5
+Vb1 Vbias1 0 DC 1.1
+Vb2 Vbias2 0 DC 3.8
+Vb3 Vbias3 0 DC 1.1
+
+M1 Nmir Vinp Ntail Ntail NMOS W=50u L=1u
+M2 Voutp Vinn Ntail Ntail NMOS W=50u L=1u
+M3 Nmir Nmir VDD VDD PMOS W=100u L=1u
+M4 Voutp Nmir VDD VDD PMOS W=100u L=1u
+M5 Ntail Vbias1 0 0 NMOS W=50u L=1u
+M6 Vout Voutp 0 0 NMOS W=50u L=1u
+M7 Vout Vbias2 VDD VDD PMOS W=100u L=1u
+M8 Vaux Vbias3 0 0 NMOS W=1u L=1u
+Raux VDD Vaux 1meg
+Routp Voutp 0 100meg
+Rout Vout 0 100meg
+
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=100u LAMBDA=0.02
+.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=50u LAMBDA=0.02
+
+.op
+.ac dec 20 1 1Meg
+.end
+
+
+=== REPAIR GUIDANCE ===
+The previous attempt was evaluated functionally, not just syntactically. Repair the circuit so the measured behavior matches the task intent. If the evaluator reports topology-level failure, change the topology rather than only tweaking values. If a required input node appears only as an internal node, add the missing independent source. If the evaluator reports the same failure repeatedly, avoid regenerating the identical circuit.
+
+Use evaluator feedback as a design-debug signal. If the report says the circuit is not functioning correctly, identify the missing functional mechanism: biasing, load choice, feedback polarity, reference level, insufficient gain, or absent frequency-selective element. For waveform tasks, repair the netlist so the requested waveform or response is visible in the configured analysis rather than merely producing a valid operating point.
+
+For Opamp retry failures, treat 'I_D for ... is 0' as a bias-topology problem, not a syntax problem: at least one branch is off. Treat 'Common-Mode gain is larger than Differential-Mode gain' as a topology or biasing failure: the circuit is acting like a common-mode follower or symmetric passive load instead of a real differential amplifier. Repair the signal path, bias ordering, active-load structure, and stacked-device headroom rather than only nudging values.
+
+=== TOPOLOGY ISSUES DETECTED BEFORE SIMULATION ===
+- overly_strong_output_shunt_for_high_gain_stage
+Repair the topology before returning the netlist.
+
+=== REPAIR FOCUS ===
+General op-amp repair focus: keep every MOSFET conducting at DC, preserve requested bias nodes as real gate-level bias controls, avoid internal gigaohm shunts that collapse high-impedance nodes, and make the intended differential gain path dominate the common-mode response. For multi-stage structures, ensure the first stage creates a real gain node that drives the second-stage transistor gate and avoid giant resistive output shunts.

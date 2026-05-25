@@ -1,0 +1,10 @@
+{
+  "status": "needs_repair",
+  "syntax_issues": [],
+  "topology_issues": [
+    "missing_explicit_mid_supply_reference_source",
+    "missing_startup_initial_condition_for_differential_inputs"
+  ],
+  "repair_focus": "General oscillator/VCO repair focus: preserve startup-capable internal nodes, include an explicit mid-supply reference source, maintain correct feedback polarity, give the active stage enough loop gain to overcome passive losses, and avoid output rail clamps or behavioral/controlled-source shortcuts that suppress analog startup. For RC phase-shift structures, use an inverting gain stage with a three-section RC ladder referenced to mid-supply. Add a real mid-supply reference source for single-supply oscillators and tie feedback/bias networks to it.",
+  "recommended_next_agent": "validator_subagent"
+}

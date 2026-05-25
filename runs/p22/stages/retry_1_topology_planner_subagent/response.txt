@@ -1,0 +1,60 @@
+**Topology summary**
+
+Use a single-supply behavioral op-amp RC phase-shift oscillator. The output port is exactly `Vout`. The circuit should run from `VDD=5 V` and bias all signal nodes around a bypassed mid-supply reference `Vref ~= 2.5 V`. The gain stage is an inverting high-gain block with `Vinp` tied to `Vref`, `Vinn` as the summing/inverting node, and output clipped or limited to the 0 V to 5 V supply range.
+
+**Device/function list**
+
+- `VDD`: 5 V independent DC supply from `VDD` to ground.
+- `Rtop`, `Rbot`: equal divider resistors from `VDD` to `Vref` to ground.
+- `Cref`: bypass capacitor from `Vref` to ground.
+- Behavioral op-amp/gain source:
+  - positive input node: `Vinp`
+  - negative input node: `Vinn`
+  - output node: `Vout`
+  - finite high gain with output limiting between 0 V and 5 V.
+- Three RC phase-shift sections:
+  - `C1` from `Vout` to `n1`, `R1` from `n1` to `Vref`
+  - `C2` from `n1` to `n2`, `R2` from `n2` to `Vref`
+  - `C3` from `n2` to `n3`, `R3` from `n3` to `Vref`
+- Inverting gain network:
+  - `Rin` from `n3` to `Vinn`
+  - `Rf` from `Vout` to `Vinn`
+  - choose `Rf/Rin` above 29, preferably about 35 to 45, e.g. `Rin=10k`, `Rf=390k`.
+
+**Bias/reference strategy**
+
+`Vref` is the signal common-mode point. Use equal divider resistors, for example `100k/100k`, and a bypass capacitor such as `1uF` or larger. Tie `Vinp` directly to `Vref`. Ensure `Vinn`, `n1`, `n2`, and `n3` all have DC paths to `Vref`, so the operating point is well-defined near 2.5 V.
+
+Add startup imbalance with `.ic`, for example:
+
+```spice
+.ic V(n1)=2.55 V(n2)=2.45 V(n3)=2.52 V(Vout)=2.5
+```
+
+**Signal or feedback path**
+
+`Vout` feeds the three cascaded RC high-pass sections. The ladder output at `n3` drives the inverting summing node through `Rin`. The op-amp inverting stage adds another 180 degrees phase inversion, while the RC ladder contributes approximately 180 degrees near the selected frequency. With equal `R=10k` and `C=10nF`, oscillation should land in the low-kHz range and be visible during `.tran 1u 5m`.
+
+`Rf` from `Vout` to `Vinn` sets the inverting gain with `Rin`. Use enough excess gain for startup, but rely on output limiting to prevent runaway.
+
+**SPICE/netlist constraints**
+
+- Preserve output node name exactly: `Vout`.
+- Include exactly:
+  ```spice
+  .tran 1u 5m
+  ```
+- Save or expose `V(Vout)`.
+- Do not add external input nodes.
+- If using a behavioral source, implement finite output limiting, e.g. a `LIMIT()` or equivalent expression around a high-gain differential term centered on `Vref`.
+- Avoid ideal unlimited gain sources without clipping.
+- Keep all RC ladder shunt resistors referenced to `Vref`, not ground, for single-supply operation.
+
+**Failure risks to avoid**
+
+- Too little loop gain: `Rf/Rin <= 29` may repeat the failed tiny 20 mV ripple behavior.
+- No startup perturbation: a perfectly symmetric oscillator can remain stuck at the DC operating point.
+- Wrong bias reference: grounding the RC resistors or input network can force nodes away from mid-supply and kill oscillation.
+- Missing output limiting: unlimited behavioral gain may cause numerical runaway or unrealistic voltages.
+- Loading `n3` too heavily: the summing network should not collapse the phase-shift ladder output.
+- Naming mistakes: the evaluator expects `Vout`, so do not rename it to `out`, `vout`, or an internal op-amp node.

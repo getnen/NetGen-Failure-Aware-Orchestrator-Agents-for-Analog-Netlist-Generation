@@ -1,0 +1,19 @@
+* 5 V four-transistor NMOS cascode current mirror
+VDD VDD 0 DC 5
+IREFSRC VDD Iref DC 100uA
+RLOAD VDD Iout 10k
+M1 nref_mid nref_mid 0 0 NMOS W=50u L=1u
+M2 Iref Iref nref_mid nref_mid NMOS W=50u L=1u
+M3 nout_mid nref_mid 0 0 NMOS W=50u L=1u
+M4 Iout Iref nout_mid nout_mid NMOS W=50u L=1u
+.model NMOS NMOS (LEVEL=1 VTO=0.6 KP=100u)
+.op
+
+.control
+set filetype=ascii
+set wr_singlescale
+op
+wrdata <REDACTED> v(Iout)
+quit
+.endc
+.end

@@ -1,0 +1,39 @@
+**Topology Summary**  
+Use a passive twin-T notch filter between `Vin` and `Vout`, with the two T networks connected in parallel and both referenced to ground. One branch is a resistive T with a shunt capacitor; the other is a capacitive T with a shunt resistor. With standard twin-T ratios, the notch is centered at `f0 = 1 / (2*pi*R*C)`, nominally about 159 kHz for `R = 1k` and `C = 1n`.
+
+**Device/Function List**  
+- `V1 Vin 0 AC 1`: independent AC drive source
+- Resistive T branch:
+  - `R` from `Vin` to resistive midpoint
+  - `R` from resistive midpoint to `Vout`
+  - `2C` capacitor from resistive midpoint to ground
+- Capacitive T branch:
+  - `C` from `Vin` to capacitive midpoint
+  - `C` from capacitive midpoint to `Vout`
+  - `R/2` resistor from capacitive midpoint to ground
+- Optional: one very large resistor from `Vout` to ground only if the simulator needs a DC reference at the output
+
+**Bias/Reference Strategy**  
+No supply rails or active-device biasing are needed. Node `0` is the only reference. `Vin` is driven directly by `V1`, so it is not floating. `Vout` is the passive observation node and must remain exactly named `Vout`.
+
+**Signal Or Feedback Path**  
+The signal reaches `Vout` through two passive paths in parallel. Near the notch frequency, the phase/amplitude contributions of the resistive-T and capacitive-T branches cancel at `Vout`, creating the stop-band null. There is no active feedback loop; cancellation is purely from passive network superposition.
+
+**SPICE/Netlist Constraints**  
+- Final file: `p13.cir`
+- Exact ports: `Vin`, `Vout`
+- Use only primitive `V`, `R`, `C`
+- Include exactly: `.ac dec 20 1 1e9`
+- Keep twin-T ratios exact for a deep notch:
+  - series resistors = `R`, `R`
+  - shunt resistor = `R/2`
+  - series capacitors = `C`, `C`
+  - shunt capacitor = `2C`
+
+**Failure Risks To Avoid**  
+- Do not swap the shunt elements between the two T branches
+- Do not break the parallel connection between `Vin` and `Vout`; both T networks must span the same endpoints
+- Do not rename or omit `Vin` or `Vout`
+- Do not add active devices, dependent sources, or supply rails
+- Avoid inaccurate ratios or mismatched “equal” parts; notch depth is highly sensitive to matching
+- If adding a load/stability resistor at `Vout`, keep it very large so it does not materially spoil the notch or insertion loss

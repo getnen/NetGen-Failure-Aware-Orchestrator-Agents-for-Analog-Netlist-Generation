@@ -1,0 +1,35 @@
+**Topology Summary**
+Use one NMOS as a low-side constant current sink with a resistive pull-up load. `Vout` is the shared drain/load node. The resistor connects from `VDD` to `Vout`; the NMOS connects from `Vout` to ground. The gate is driven directly by `Vbias`.
+
+**Device/Function List**
+- `VDD`: DC supply source from `VDD` to `0`, value `5 V`.
+- `Vbias`: DC bias source named explicitly as `Vbias`, connected `Vbias 0`, value `DC 1.0`.
+- `R`: load resistor from `VDD` to `Vout`, nominal `10k`.
+- NMOS transistor: drain=`Vout`, gate=`Vbias`, source=`0`, bulk=`0`.
+- `.model NMOS NMOS`: threshold around `0.5-0.7 V`, `kp=100u`.
+- NMOS sizing: nominal `W=50u`, `L=1u`.
+
+**Bias/Reference Strategy**
+`VDD=5 V` establishes the pull-up rail. `Vbias=1.0 V` gives the NMOS `Vgs=1.0 V`, above threshold, so the transistor sinks current from `Vout` through its channel to ground. The resistor converts that sink current into a DC output voltage at `Vout`.
+
+**Signal or Feedback Path**
+There is no active feedback or mirror reference branch. The DC path is:
+`VDD -> R -> Vout -> NMOS drain/source -> 0`.
+
+`Vbias` only controls the NMOS gate and should not be loaded except by the MOS gate.
+
+**SPICE/Netlist Constraints**
+- Preserve node names exactly: `Vbias`, `Vout`.
+- `Vout` must be the NMOS drain and the lower terminal of the resistor.
+- `Vbias` must be electrically driven by an explicit independent DC source.
+- Include `.op` analysis.
+- Include an `NMOS` model named exactly `NMOS`.
+- Do not write a diode-connected NMOS, reference leg, or full current mirror.
+
+**Failure Risks To Avoid**
+- Do not leave `Vbias` floating or rename it to something like `VB`.
+- Do not connect the load resistor to ground; it must connect from `VDD` to `Vout`.
+- Do not swap NMOS drain/source in a way that makes `Vout` the source.
+- Do not omit the bulk connection to ground.
+- Avoid choosing `Vbias` below threshold, which would turn the sink mostly off.
+- Ensure resistor/device sizing does not force `Vout` near ground so hard that the NMOS leaves saturation unexpectedly.

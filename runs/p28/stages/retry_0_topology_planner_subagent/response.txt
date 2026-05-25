@@ -1,0 +1,55 @@
+**Topology summary**
+
+Use a single-supply, non-inverting Schmitt trigger built around one primitive-MOS comparator core plus an optional light output inverter. Create one explicit summing node, `VTH`, that receives `Vin` through `Rin`, `Vout` through `Rfb`, and `VREF` through `Rref`. Compare `VTH` against a quiet `VREF` input using a strong NMOS differential pair with PMOS current-mirror active load and an NMOS tail current source. Take the single-ended comparator output into `Vout` directly if swing is sufficient, or through one light CMOS inverter if rail restoration is needed.
+
+**Device/function list**
+
+- `Rin`: `Vin` to `VTH`; injects input signal into the threshold node.
+- `Rfb`: `Vout` to `VTH`; explicit positive feedback that shifts trip point with output state.
+- `Rref`: `VREF` to `VTH`; keeps `VTH` well anchored near mid-supply.
+- NMOS input pair:
+  - One gate at `VTH`
+  - One gate at `VREF`
+- PMOS current-mirror load pair:
+  - Converts differential current to single-ended gain
+  - Provides high comparator gain without resistive loads
+- NMOS tail current source:
+  - Biases the diff pair at a solid current level
+- Bias branch for tail source:
+  - Primitive MOS bias stack or diode-connected reference device from `VDD`/`VSS`
+- Optional light CMOS inverter:
+  - Restores `Vout` near rails
+  - Must be only a light buffer, not a multistage logic chain
+- Independent voltage sources:
+  - `VDD = 5 V`
+  - `VSS = 0 V`
+  - `VREF = 2.5 V`
+  - `Vin` stimulus source
+
+**Bias/reference strategy**
+
+Use `VREF = 2.5 V` as both the quiet comparator reference and the resistor-network anchor. Keep `Rin`, `Rfb`, and `Rref` in the same rough scale so `VTH` is always well-defined; a good starting point is `Rin = 100k`, `Rfb = 330k`, `Rref = 100k` to `150k`. Bias the diff pair strongly enough for decisive gain, with branch currents in the tens to low hundreds of microamps. Use 4-terminal MOSFETs and tie each bulk to its source unless a shared-well choice is made deliberately later.
+
+**Signal or feedback path**
+
+`Vin` does not drive the comparator gate directly; it enters through `Rin` into `VTH`. `Vout` feeds back through `Rfb` into the same `VTH` node, so the effective threshold depends on the current output state. When `Vout` is low, `VTH` is pulled downward less, so `Vin` must rise higher to flip the comparator high. When `Vout` is high, `VTH` is biased upward, so `Vin` can fall lower before the comparator flips low. This gives non-inverting hysteresis with distinct rising and falling trip points.
+
+**SPICE/netlist constraints**
+
+- Preserve port names exactly: `Vin`, `Vout`.
+- Use primitive MOS devices only; no behavioral comparator or controlled-source hysteresis substitute.
+- Keep one explicit threshold-summing node; do not split the threshold function across multiple floating nodes.
+- Tie the second comparator input directly to `VREF`.
+- `Vin` must be an explicit independent source terminal, not an internal label.
+- `Vout` must be the final named output and also the source of `Rfb`.
+- Keep the output stage minimal: comparator core plus at most one light inverter/buffer.
+- Plan for `.op`, slow-ramp `.tran`, and optional forward/reverse DC sweep to extract rising and falling thresholds.
+
+**Failure risks to avoid**
+
+- Do not leave `VTH` floating or referenced only through a huge leak resistor.
+- Do not make `Rref` orders of magnitude weaker than `Rin` and `Rfb`; that destroys threshold definition.
+- Do not use an overly weak diff pair, tiny tail current, or very large passive loads that only produce small analog movement instead of clean switching.
+- Do not hide the hysteresis in cascaded CMOS inverters or pseudo-buffer stages.
+- Do not add clamp diodes or complicated output limiting that reduces output swing and collapses hysteresis.
+- Do not let finite output swing become too small; `Vout` must move enough to separate the upper and lower trip points clearly.

@@ -1,0 +1,7 @@
+{
+  "status": "ready_for_ngspice",
+  "syntax_issues": [],
+  "topology_issues": [],
+  "repair_focus": "",
+  "recommended_next_agent": "evaluation_retry_subagent"
+}

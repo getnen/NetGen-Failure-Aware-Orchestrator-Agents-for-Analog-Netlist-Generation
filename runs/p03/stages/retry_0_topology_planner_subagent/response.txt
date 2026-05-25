@@ -1,0 +1,40 @@
+**Topology Summary**
+Build a single-transistor NMOS common-drain amplifier. `Vin` is the gate input, `Vout` is the source output, the drain is tied to `VDD`, and the bulk is tied directly to `Vout`. A resistor load from `Vout` to ground provides the source current path and defines the output load.
+
+**Device/Function List**
+- `VDD`: independent DC voltage source from `VDD` to `0`, value `5 V`.
+- `Vin`: independent input voltage source from `Vin` to `0`, with `DC 2.5` and `AC 1`.
+- `M1`: NMOS source follower:
+  - drain: `VDD`
+  - gate: `Vin`
+  - source: `Vout`
+  - bulk: `Vout`
+- `Rload`: resistor from `Vout` to `0`, choose `10k` or `47k`.
+- NMOS model: level-1 style is sufficient, with `VTO=0.7`, `KP=100u`, `W=50u`, `L=1u`.
+
+**Bias/Reference Strategy**
+Use `VDD = 5 V` as the drain supply and ground node `0` as the global reference. Bias `Vin` at `2.5 V` so the NMOS conducts and pulls `Vout` up through source-follower action. Expected `Vout` is below `Vin` by roughly `VGS`, with current set mainly by `Rload`.
+
+Tie the bulk to `Vout` to eliminate body effect and preserve the intended threshold behavior.
+
+**Signal Or Feedback Path**
+Small-signal input is applied at `Vin` through the gate. The source node `Vout` follows gate movement through local negative feedback: if `Vout` rises, `VGS` falls, reducing current; if `Vout` falls, `VGS` rises, increasing current. Expected AC gain `V(Vout)/V(Vin)` should be positive, less than 1, and near unity depending on bias current and load resistance.
+
+**SPICE/Netlist Constraints**
+- Final file must be named `p3.cir`.
+- Preserve exact node names `Vin` and `Vout`.
+- `Vin` must be driven by an explicit independent voltage source.
+- `Vout` must be both the NMOS source node and the top terminal of `Rload`.
+- Include `.op`.
+- Include `.ac dec 20 1 1e9`.
+- Input source must include `AC 1` for direct gain measurement.
+- No subcircuits.
+- No floating input or output nodes.
+
+**Failure Risks To Avoid**
+- Do not connect the drain to `Vout`; this would make a diode-connected NMOS, not a common-drain amplifier.
+- Do not tie the bulk to ground; that introduces body effect and changes the follower bias.
+- Do not omit the DC bias on `Vin`; the transistor may be off.
+- Do not omit `AC 1` on the input source; AC gain will not be measurable.
+- Do not leave `Vout` unloaded or floating; `Rload` to ground is required.
+- Ensure the operating point keeps the NMOS reasonably in saturation: `VDS >= VGS - VTH`.

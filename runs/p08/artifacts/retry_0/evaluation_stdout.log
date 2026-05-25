@@ -1,0 +1,6 @@
+Load: 100, Current: 0.0004396482863369666
+Load: 300, Current: 0.0004389465331986416
+Load: 500, Current: 0.00043824701672397914
+Load: 750, Current: 0.00043737575018088274
+Load: 1000, Current: 0.00043650794104512956
+The circuit functions correctly as a current source within the given tolerance.

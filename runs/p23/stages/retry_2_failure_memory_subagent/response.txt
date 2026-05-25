@@ -1,0 +1,18 @@
+{
+  "failure_signatures": [
+    {
+      "failure_type": "functional_error",
+      "summary_prefix": "Functional evaluation failed on retry 0.\nFailure type: functional_error\nSuggested next stage: validator_subagent\n\nEvaluator report:\nOutput amplitude: 4.9713293835\nOutput stddev: 2.0533820777741454\nTail amplitude: 4.9647114538\nTail stddev: 2"
+    },
+    {
+      "failure_type": "functional_error",
+      "summary_prefix": "Functional evaluation failed on retry 1.\nFailure type: functional_error\nSuggested next stage: validator_subagent\n\nEvaluator report:\nOutput amplitude: 5.0336180414\nOutput stddev: 1.0904519262252117\nTail amplitude: 5.0313667758\nTail stddev: 1"
+    },
+    {
+      "failure_type": "functional_error",
+      "summary_prefix": "Functional evaluation failed on retry 2.\nFailure type: functional_error\nSuggested next stage: validator_subagent\n\nEvaluator report:\nOutput amplitude: 5.011705006\nOutput stddev: 1.3195015868637097\nTail amplitude: 5.010539406\nTail stddev: 1.3"
+    }
+  ],
+  "previous_netlist": "* 5V single-supply transistor Wien bridge oscillator\nVDD VDD 0 DC 5\nVREF Vref 0 DC 2.5\n\nRw1 Vout Vwser 10k\nCw1 Vwser Vinp 10n\nRw2 Vinp Vref 10k\nCw2 Vinp Vref 10n\n\nRf1 Vout Vflim 3.3k\nRf2 Vflim Vinn 18k\nRg Vinn Vref 10k\n* Dlim1 Vflim Vinn DLIM\n* Dlim2 Vinn Vflim DLIM\n\nItail ntail 0 DC 340u\nM1 nout1 Vinp ntail ntail NMOS W=240u L=2u\nM2 nload Vinn ntail ntail NMOS W=240u L=2u\nM3 nout1 nout1 VDD VDD PMOS W=520u L=2u\nM4 nload nout1 VDD VDD PMOS W=520u L=2u\n\nM5 nout2 nload VDD VDD PMOS W=700u L=2u\nM6 nout2 nbiasn 0 0 NMOS W=220u L=2u\n\nVBN nbiasn 0 DC 1.05\nRdrv nout2 ndrv 2.2k\nCdom ndrv Vout 4p\nM7 Vout ndrv VDD VDD PMOS W=520u L=2u\nM8 Vout nbiasn 0 0 NMOS W=180u L=2u\nRbleed Vout Vref 100k\nCload Vout 0 50p\n\n.model NMOS NMOS LEVEL=1 VTO=0.7 KP=220u LAMBDA=0.02\n.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=90u LAMBDA=0.02\n.model DLIM D IS=1n RS=10 N=1.8 CJO=0.2p\n\n.ic V(Vinp)=2.501 V(Vinn)=2.499 V(Vout)=2.55 V(Vwser)=2.6 V(nload)=2.2 V(nout1)=2.2 V(nout2)=2.8 V(ndrv)=2.4\n.save V(Vout) V(Vinp) V(Vinn)\n.tran 1u 5m\n.end\n",
+  "previous_failure_type": "functional_error"
+}

@@ -1,0 +1,40 @@
+**Topology Summary**
+Single-stage NMOS common-source amplifier with a resistive drain load. The NMOS source and bulk are tied to ground, gate is driven by `Vin`, and drain is the output node `Vout`. A resistor `R` connects from `VDD` to `Vout`, converting NMOS drain-current variation into output voltage variation.
+
+**Device/Function List**
+- `VDD` supply: independent DC voltage source from node `VDD` to ground, value `5 V`.
+- Input source: independent voltage source driving `Vin`, with DC bias around `1.2 V` and AC magnitude `1` for gain analysis.
+- NMOS transistor:
+  - Model name: `NMOS`
+  - Drain: `Vout`
+  - Gate: `Vin`
+  - Source: ground
+  - Bulk: ground
+  - Dimensions: `W=50u`, `L=1u`
+- Load resistor `R`: from `VDD` to `Vout`, nominal `50k`, allowed range `10k` to `100k`.
+
+**Bias/Reference Strategy**
+Use ground as the source, bulk, and global reference. Bias `Vin` near `1.2 V`, giving expected overdrive of about `0.5 V` assuming `Vth=0.7 V`. Choose `R=50k` initially, then verify `.op` keeps `Vout` above roughly `Vin - Vth`, preferably above `0.5 V`, so the NMOS remains in saturation.
+
+**Signal or Feedback Path**
+Small-signal input is applied at `Vin` to the NMOS gate. Increasing `Vin` increases drain current, increasing the voltage drop across `R`, so `Vout` decreases. Expected gain is inverting. There is no intentional feedback path; only intrinsic MOS capacitances and output resistance contribute parasitic feedback/finite bandwidth behavior.
+
+**SPICE/Netlist Constraints**
+- Final file must be named `p1.cir`.
+- Preserve node names exactly: `Vin`, `Vout`.
+- `Vin` must be driven by an explicit independent voltage source, not left as a bare node.
+- `Vout` must be the NMOS drain and amplifier output.
+- Include `.op`.
+- Include `.ac dec 20 1 1e9`.
+- Define model `NMOS` explicitly with `Vth=0.7 V` and `kp=100u`.
+- MOSFET instance must use `W=50u` and `L=1u`.
+- Use `R` between `VDD` and `Vout`, nominally `50k`.
+
+**Failure Risks to Avoid**
+- Do not swap drain/source such that `Vout` is not the drain.
+- Do not leave NMOS bulk floating; tie it to ground.
+- Do not omit the explicit `Vin` voltage source or its AC magnitude.
+- Do not bias `Vin` below `1.2 V`.
+- Do not choose `R` so large that `Vout` collapses near ground and forces triode operation.
+- Do not rename required nodes to lowercase or aliases such as `vin`, `out`, or `vout`.
+- Do not write a PMOS load or current-source load; the requested load is resistive `R`.

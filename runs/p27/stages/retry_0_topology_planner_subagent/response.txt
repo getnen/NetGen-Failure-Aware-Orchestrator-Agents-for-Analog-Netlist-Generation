@@ -1,0 +1,38 @@
+**Topology Summary**
+Use a one-op-amp differential amplifier/subtractor with four matched resistors. The circuit implements `Vout = Vin2 - Vin1` by applying `Vin1` to the inverting side and `Vin2` to the non-inverting side with unity matched ratios.
+
+**Device/Function List**
+- One ideal op amp or high-gain primitive VCVS-style op amp.
+- `R1 = 10 kOhm`: from `Vin1` to the inverting summing node.
+- `R2 = 10 kOhm`: from `Vout` back to the inverting summing node.
+- `R3 = 10 kOhm`: from `Vin2` to the non-inverting reference node.
+- `R4 = 10 kOhm`: from the non-inverting reference node to ground.
+- Independent DC voltage source driving `Vin1`.
+- Independent DC voltage source driving `Vin2`.
+- Independent 5 V supply source defining `VDD`.
+
+**Bias/Reference Strategy**
+Use ground as the 0 V reference and `VDD = 5 V`. For `.op`, choose inputs that keep the ideal subtractor output inside the single-supply range. Recommended test bias: `Vin1 = 1 V`, `Vin2 = 3 V`, expecting `Vout = 2 V`.
+
+If the op amp primitive includes supply pins, power it from `VDD` and ground. If implemented as a high-gain VCVS, its output should drive `Vout` referenced to ground.
+
+**Signal Or Feedback Path**
+`Vin1` feeds the inverting summing node through `R1`. Negative feedback through `R2` forces the inverting node to match the non-inverting reference node.
+
+`Vin2` feeds the non-inverting node through `R3`, while `R4` to ground creates the matched reference divider. With `R1 = R2 = R3 = R4`, the common-mode terms cancel and the closed-loop output is `Vout = Vin2 - Vin1`.
+
+**SPICE/Netlist Constraints**
+- Final file must be named `p27.cir`.
+- Preserve node names exactly: `Vin1`, `Vin2`, `Vout`.
+- Include `.op`.
+- Explicitly drive both `Vin1` and `Vin2` with independent voltage sources.
+- Use primitive devices only: resistors, voltage sources, and an ideal op amp realized by a primitive high-gain source or equivalent.
+- Do not use subcircuits, hidden models, or behavioral shortcuts unless absolutely unavoidable.
+
+**Failure Risks To Avoid**
+- Do not swap `Vin1` and `Vin2`, or the sign becomes `Vin1 - Vin2`.
+- Do not mismatch resistor ratios; unity subtraction requires `R1 = R2 = R3 = R4`.
+- Do not leave `Vin1`, `Vin2`, or either op amp input node floating.
+- Do not omit a ground reference for the non-inverting network.
+- Do not choose `.op` input values that force `Vout` below ground or above `VDD` in a single-supply setup.
+- Do not accidentally name ports `vin1`, `VIN1`, `out`, or similar; exact names are required.

@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Differentiator
+Task: An Opamp differentiator with resistor Rf and capacitor C1

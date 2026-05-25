@@ -1,0 +1,71 @@
+**Topology summary**
+
+Use a single-supply CMOS comparator with:
+
+- An NMOS differential pair as the input stage.
+- A PMOS active current-mirror load to create one high-gain single-ended internal node.
+- One CMOS inverter as the restoring/output stage, with final output node named `Vout`.
+
+Polarity choice matters: connect `Vin` to the NMOS on the **mirror-output/internal-node side**, and connect `Vref` to the NMOS on the **diode-connected mirror-reference side**. With that orientation, `Vin > Vref` drives the internal node low, and the inverter makes `Vout` high.
+
+**Device/function list**
+
+- Two NMOS input devices:
+  - `Vin` branch NMOS: gate = `Vin`, drain = first-stage internal node.
+  - `Vref` branch NMOS: gate = `Vref`, drain = mirror-reference node.
+- Two PMOS load devices:
+  - One diode-connected PMOS on the `Vref` branch.
+  - One mirrored PMOS on the `Vin` branch to form the high-gain node.
+- One NMOS tail current-source device below the joined input-pair sources.
+- One primitive bias generator for the tail source:
+  - Preferred: diode-connected NMOS plus resistor creating a gate bias node for the tail device.
+- One CMOS inverter:
+  - PMOS pull-up and NMOS pull-down.
+  - Input = first-stage internal node.
+  - Output = `Vout`.
+- Independent sources for `VDD`, `Vin`, and `Vref`.
+- Optional small capacitor from `Vout` to `VSS`.
+
+**Bias/reference strategy**
+
+- `VDD = 5 V`, `VSS = 0 V`.
+- Drive `Vref` from an explicit DC source, nominally `2.5 V`.
+- Drive `Vin` from an explicit source:
+  - DC sweep: `0 V` to `5 V`.
+  - Transient: slow ramp or pulse crossing `Vref`.
+- Bias the NMOS tail current to roughly `20 uA` to `100 uA`.
+- Standard bulk ties:
+  - NMOS bulk to `VSS`
+  - PMOS bulk to `VDD`
+
+**Signal or feedback path**
+
+- `Vin > Vref`:
+  - `Vin`-side NMOS pulls harder.
+  - Mirror-reference branch current drops.
+  - Mirrored PMOS current into the internal node drops.
+  - Internal node falls.
+  - Inverter drives `Vout` high.
+- `Vin < Vref`:
+  - Internal node rises.
+  - Inverter drives `Vout` low.
+
+There is no intentional regenerative positive feedback or hysteresis in this plan; switching sharpness comes from first-stage gain plus inverter restoration.
+
+**SPICE/netlist constraints**
+
+- Preserve node names exactly: `Vin`, `Vout`, and explicit `Vref`.
+- Keep `Vin` and `Vref` externally driven; neither may float.
+- `Vout` must be the inverter output, not the first-stage node.
+- Use only primitive MOS devices, resistor, capacitor, and independent sources.
+- Do not replace the comparator with behavioral elements or controlled-source shortcuts.
+- Keep the first-stage internal node separate from the diode-connected mirror-reference node.
+
+**Failure risks to avoid**
+
+- Do not swap the `Vin` and `Vref` branch placement; that flips comparator polarity.
+- Do not take the main first-stage output from the diode-connected load node; it has weaker gain.
+- Do not leave the tail-bias node floating; the bias network must define startup and DC current.
+- Do not oversize the output inverter so much that it heavily loads the internal node and softens the transition.
+- Do not expect rail-to-rail precision input common-mode behavior; this simple NMOS-input topology is best centered around mid-supply.
+- With no hysteresis, very slow or noisy crossings near `Vin = Vref` can cause chatter in transient analysis.

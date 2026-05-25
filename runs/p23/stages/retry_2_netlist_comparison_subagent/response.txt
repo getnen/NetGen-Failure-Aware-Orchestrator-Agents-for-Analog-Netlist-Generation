@@ -1,0 +1,68 @@
+{
+  "status": "repeated_failure",
+  "similarity": 0.9,
+  "repeated_failure_signature": true,
+  "previous_failure_type": "functional_error",
+  "current_failure_type": "functional_error",
+  "recommendation": "force_spec_redesign",
+  "current_signature": {
+    "element_counts": {
+      "v": 3,
+      "r": 7,
+      "c": 4,
+      "i": 1,
+      "m": 8
+    },
+    "models": [
+      "dlim",
+      "nmos",
+      "pmos"
+    ],
+    "nodes": [
+      "nbiasn",
+      "ndrv",
+      "nload",
+      "nout1",
+      "nout2",
+      "ntail",
+      "vdd",
+      "vflim",
+      "vinn",
+      "vinp",
+      "vout",
+      "vref",
+      "vwser"
+    ],
+    "digest": "dd0410cd480dfaef"
+  },
+  "previous_signature": {
+    "element_counts": {
+      "v": 3,
+      "r": 7,
+      "c": 4,
+      "i": 1,
+      "m": 8
+    },
+    "models": [
+      "dlim",
+      "nmos",
+      "pmos"
+    ],
+    "nodes": [
+      "nbiasn",
+      "ndrv",
+      "nload",
+      "nout1",
+      "nout2",
+      "ntail",
+      "vdd",
+      "vflim",
+      "vinn",
+      "vinp",
+      "vout",
+      "vref",
+      "vwser"
+    ],
+    "digest": "e95f163ad142100e"
+  }
+}

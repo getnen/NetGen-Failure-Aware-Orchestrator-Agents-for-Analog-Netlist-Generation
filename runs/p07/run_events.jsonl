@@ -1,0 +1,2 @@
+{"ts_utc": "08:42:13.784537+00:00", "type": "run.started", "payload": {"run_id": "p7_a00", "backend": "codex", "task_id": "7", "task_type": "Inverter", "task_level": "Easy", "output_cir": "p7.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "08:42:50.615626+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 1}}

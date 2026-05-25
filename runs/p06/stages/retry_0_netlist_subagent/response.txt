@@ -1,0 +1,8 @@
+* Resistive-load NMOS inverter
+VDD VDD 0 DC 5
+Vin Vin 0 DC 0
+R VDD Vout 10k
+M1 Vout Vin 0 0 NMOS W=10u L=1u
+.model NMOS NMOS (LEVEL=1 VTO=0.7 KP=200u LAMBDA=0.02)
+.dc Vin 0 5 0.1
+.end

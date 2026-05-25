@@ -1,0 +1,4 @@
+{"type": "thread.started", "thread_id": "019dee19-2e0c-7ac1-b55d-04252b901de7"}
+{"type": "turn.started"}
+{"type": "item.completed", "item": {"id": "item_0", "type": "agent_message", "text": "* 5 V four-transistor NMOS cascode current mirror\nVDD VDD 0 DC 5\nIREFSRC VDD Iref DC 100uA\nRLOAD VDD Iout 10k\nM1 nref_mid nref_mid 0 0 NMOS W=50u L=1u\nM2 Iref Iref nref_mid nref_mid NMOS W=50u L=1u\nM3 nout_mid nref_mid 0 0 NMOS W=50u L=1u\nM4 Iout Iref nout_mid nout_mid NMOS W=50u L=1u\n.model NMOS NMOS (LEVEL=1 VTO=0.6 KP=100u)\n.op\n.end"}}
+{"type": "turn.completed", "usage": {"input_tokens": 23387, "cached_input_tokens": 21376, "output_tokens": 684, "reasoning_output_tokens": 516}}

@@ -1,0 +1,9 @@
+{
+  "status": "needs_repair",
+  "syntax_issues": [
+    "contains_disabled_spice_elements"
+  ],
+  "topology_issues": [],
+  "repair_focus": "",
+  "recommended_next_agent": "validator_subagent"
+}

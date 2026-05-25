@@ -1,0 +1,11 @@
+{
+  "next_agent": "spec_normalizer_subagent",
+  "reason": "Pre-simulation evaluation found issues that should be repaired before ngspice/checker execution.",
+  "retry_index": 0,
+  "context": {
+    "syntax_issues": [],
+    "topology_issues": [
+      "pll_detector_or_reset_fabric_too_helper_node_heavy"
+    ]
+  }
+}

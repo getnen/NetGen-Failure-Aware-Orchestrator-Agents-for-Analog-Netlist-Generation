@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Inverter
+Task: A logical inverter with 1 NMOS and 1 PMOS

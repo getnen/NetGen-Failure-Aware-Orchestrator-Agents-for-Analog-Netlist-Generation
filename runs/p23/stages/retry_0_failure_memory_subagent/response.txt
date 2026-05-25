@@ -1,0 +1,10 @@
+{
+  "failure_signatures": [
+    {
+      "failure_type": "functional_error",
+      "summary_prefix": "Functional evaluation failed on retry 0.\nFailure type: functional_error\nSuggested next stage: validator_subagent\n\nEvaluator report:\nOutput amplitude: 4.9713293835\nOutput stddev: 2.0533820777741454\nTail amplitude: 4.9647114538\nTail stddev: 2"
+    }
+  ],
+  "previous_netlist": "* 5V single-supply transistor Wien bridge oscillator\nVDD VDD 0 DC 5\nVREF Vref 0 DC 2.5\n\nRw1 Vout Vwser 10k\nCw1 Vwser Vinp 10n\nRw2 Vinp Vref 10k\nCw2 Vinp Vref 10n\n\nRf1 Vout Vflim 12k\nRf2 Vflim Vinn 12k\nRg Vinn Vref 10k\n\nItail ntail 0 DC 180u\nM1 nload Vinp ntail ntail NMOS W=120u L=2u\nM2 nout1 Vinn ntail ntail NMOS W=120u L=2u\nM3 nload nload VDD VDD PMOS W=260u L=2u\nM4 nout1 nload VDD VDD PMOS W=260u L=2u\n\nIbiasp nbiasp 0 DC 120u\nMbiasp nbiasp nbiasp VDD VDD PMOS W=160u L=2u\nM5 nout2 nout1 VDD VDD PMOS W=420u L=2u\nM6 nout2 nbiasn 0 0 NMOS W=160u L=2u\n\nVBN nbiasn 0 DC 1.05\nRdrv nout2 ndrv 4.7k\nM7 Vout ndrv VDD VDD PMOS W=520u L=2u\nM8 Vout nbiasn 0 0 NMOS W=220u L=2u\nRbleed Vout Vref 100k\nCload Vout 0 20p\n\n.model NMOS NMOS LEVEL=1 VTO=0.7 KP=220u LAMBDA=0.02\n.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=90u LAMBDA=0.02\n\n.ic V(Vinp)=2.501 V(Vinn)=2.499 V(Vout)=2.5 V(Vwser)=2.55\n.save V(Vout) V(Vinp) V(Vinn)\n.tran 1u 5m\n.end\n",
+  "previous_failure_type": "functional_error"
+}

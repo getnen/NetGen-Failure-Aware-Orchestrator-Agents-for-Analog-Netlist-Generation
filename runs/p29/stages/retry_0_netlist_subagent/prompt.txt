@@ -1,0 +1,145 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p29.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For VCO tasks, expose Vinp, Vinn, Vout, and Vctrl explicitly, keep a startup-capable oscillator core around a mid-supply reference, and ensure Vctrl modulates the frequency-setting path rather than only the output amplitude. Choose the nominal RC or delay scale intentionally so the free-running oscillation is in a plausible range before fine tuning Vctrl. For Wien-bridge VCOs specifically, prefer a stiff Vref source or a stiff divider-plus-cap virtual ground, one compact gain core, one clean bridge, tiny startup asymmetry only, and no commented-out limiter experiments, heavy AGC side loops, or extra output-driver chains. Prefer bridge VCR elements with explicitly anchored bodies, such as PMOS triode VCRs tied to VDD in single-supply implementations, over floating-body NMOS resistor chains that often create convergence failures.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a single-supply, transistor-level two-stage MOS op-amp core with explicit `Vinp`, `Vinn`, and `Vout`. Power it from `VDD = 12 V` and `VSS = 0 V`, and create `VREF = 6 V` as the internal AC reference. Close the positive-frequency-selective loop with a classic Wien bridge from `Vout` to `Vinp`: series branch `C1` then matched MOS-triode variable resistor `R1(Vctrl)`, and shunt branch from `Vinp` to `VREF` as matched MOS-triode variable resistor `R2(Vctrl)` in parallel with `C2`. Set the negative-feedback divider from `Vout` to `Vinn` to `VREF` for non-inverting gain slightly above 3 so startup is reliable without diode limiting.
+
+**Device / Function List**
+
+- Op-amp input stage: NMOS differential pair with drains loaded by PMOS current-mirror active load.
+- Biasing for input stage: NMOS tail current source, derived from a simple MOS bias mirror.
+- Second gain stage: one common-source MOS stage driven by the first stage output, with modest analog swing capability.
+- Compensation: one Miller capacitor between second-stage output node and first-stage high-gain node if needed for stable closed-loop analog behavior.
+- Output node: `Vout` is the second-stage output and the directly observed oscillator output.
+- Wien bridge series arm: `Vout` -> `C1` -> internal bridge node -> MOS triode resistor `R1(Vctrl)` -> `Vinp`, or equivalent ordering as long as it is a single series RC path.
+- Wien bridge shunt arm: `Vinp` -> `R2(Vctrl)` to `VREF` and `Vinp` -> `C2` to `VREF`.
+- Frequency control devices: matched MOSFETs used only as triode-region variable resistors for `R1(Vctrl)` and `R2(Vctrl)`, optionally each with a small fixed bounding resistor.
+- Gain-setting network: resistor from `Vout` to `Vinn` and resistor from `Vinn` to `VREF`.
+- `Vin` injection: explicit independent source on node `Vin`, coupled weakly into `Vinp` through a large resistor or small capacitor.
+- `Vctrl`: explicit independent source on node `Vctrl`, feeding the common gate-bias network for both triode resistors.
+- `VREF` generator: resistor divider from 12 V to 0 V plus decoupling capacitor; optional light buffering only if done with primitive transistors, but keep it simple.
+
+**Bias / Reference Strategy**
+
+Bias the signal path around `VREF = 6 V`, not ground. `Vinp` and `Vinn` should sit near `VREF` at operating point. The differential pair common-mode range must comfortably include `VREF`, and the second stage must allow centered analog swing around this midpoint. Size the op-amp for loop gain above the Wien loss at the nominal oscillation frequency, but not so aggressively that it heavily loads the bridge. Bias `R1(Vctrl)` and `R2(Vctrl)` from `Vctrl` through one simple translation network if needed so both MOS resistors remain in triode over the small-signal swing around `VREF`.
+
+**Signal / Feedback Path**
+
+`Vout` feeds two feedback paths:
+
+- Positive, frequency-selective path: `Vout` through the Wien bridge back to `Vinp`. At the oscillation frequency, the bridge should present about zero phase shift and about one-third attenuation.
+- Negative, broadband path: resistive divider from `Vout` to `Vinn` to `VREF`, setting closed-loop non-inverting gain around 3.1 to 3.3.
+
+`Vin` is not part of the main loop; it is only a weak startup injection so the required node exists and is not floating. `Vctrl` modulates only the matched bridge resistors, so frequency moves monotonically mainly through `f ≈ 1 / (2*pi*R(Vctrl)*C)`.
+
+**SPICE / Netlist Constraints**
+
+- Preserve node names exactly: `Vin`, `Vctrl`, `Vout`, `Vinp`, `Vinn`.
+- Use primitive MOSFETs, resistors, capacitors, and independent sources only.
+- No ideal op-amp macro, no `E/G/F/H/B` controlled-source core, no behavioral resistor, no switches, no diode limiter.
+- Keep the op-amp input nodes explicit and electrically meaningful.
+- Use one nominal `Vctrl` source value in the deck; frequency variation is for separate external runs, not `.step`.
+- Include `.op` and one transient run long enough for startup and settled oscillation.
+- Bulk ties should be explicit and consistent with the primitive-device assumption.
+
+**Failure Risks To Avoid**
+
+- Setting closed-loop gain at or below 3 nominally; it may never start.
+- Letting gain be far above 3 and relying on rail clipping; that will distort `Vout` and can destabilize the bridge.
+- Driving the MOS variable resistors out of triode over the bridge swing; then frequency control becomes nonlinear or broken.
+- Mismatching `R1(Vctrl)` and `R2(Vctrl)` or `C1` and `C2`; the Wien condition shifts and startup becomes unreliable.
+- Loading `Vinp` with oversized devices or extra branches; this weakens the bridge selectivity.
+- Making `VREF` too soft or noisy; bridge centering and amplifier bias will wander.
+- Leaving `Vin` floating or coupling it too strongly; either hurts convergence or corrupts steady-state oscillation.
+- Hiding multiple feedback ladders or extra buffers around `Vout`; that adds poles and makes transient behavior hard to predict.
+
+=== PARAMETER TARGETS ===
+- Commit to one controllable-oscillator family and choose one nominal control setting for the returned netlist rather than embedding an internal sweep deck.
+- For op-amp-like Wien VCOs, keep one explicit analog gain core, one clean bridge, and one clear control-sensitive element pair in the frequency-setting path.
+- Bias the bridge around a real mid-supply reference or a stiff divider-plus-cap virtual ground, keep the small-signal gain slightly above startup, and avoid extra buffers, clamps, or multi-branch stabilization ideas unless they are strictly needed.
+- Prefer a conservative fallback template when retries are going poorly: NMOS differential pair plus PMOS active load, weak Vin injection through a megohm-range resistor, and no AGC until the base loop oscillates. Add at most one light common-source or output device only if the mirror-loaded core still lacks enough swing or gain.
+- For single-supply Wien bridges, prefer control-tuned resistor elements with explicitly anchored body connections, such as PMOS triode VCRs referenced to VDD; avoid floating-body NMOS VCR chains in the bridge.
+- Prefer taking Vout from the main analog gain node or one lightly loaded follow-on gain node rather than from follower-like or pseudo-inverter arrangements that add ambiguous phase behavior.
+- Choose RC or delay values intentionally so the free-running oscillation lands in a plausible range before Vctrl tuning; do not let both the resistive and capacitive scales drift large enough that the loop only produces slow ripple.
+
+=== NORMALIZED SPEC ===
+final_filename: p29.cir
+
+Objective:
+Implement one nominal, runnable Wien-bridge voltage-controlled oscillator that produces a sustained near-sinusoidal output at node Vout. The oscillation frequency must be set by a Wien-bridge RC network whose effective resistance is explicitly modulated by Vctrl. The named input nodes Vin and Vctrl must both appear in the final netlist and must each be driven by explicit independent sources. Because this is an op-amp-like oscillator, keep Vinp, Vinn, and Vout as explicit nodes in the implementation.
+
+Topology:
+Use a single-supply, primitive-MOS two-stage op-amp core with explicit non-inverting input node Vinp, inverting input node Vinn, and output node Vout. Bias the whole oscillator from VDD = 12 V and VSS = 0 V, with a generated mid-supply reference VREF = 6 V used as the small-signal ground for the Wien bridge and for input biasing.
+
+Connect the Wien bridge from Vout back to Vinp:
+- Series arm from Vout to Vinp: capacitor C1 in series with a Vctrl-sensitive resistor element R1(Vctrl).
+- Shunt arm from Vinp to VREF: resistor R2(Vctrl) in parallel with capacitor C2.
+Choose C1 = C2 and make R1(Vctrl) and R2(Vctrl) matched so the classic Wien condition is preserved while frequency varies mainly as 1 / (2*pi*R(Vctrl)*C).
+
+Use one explicit control mechanism only:
+- Realize R1(Vctrl) and R2(Vctrl) as matched MOS triode-region variable resistors, each optionally padded with a small fixed series resistor so the resistance stays bounded and startup remains numerically stable.
+- Drive the gates of both variable-resistor devices from Vctrl through a simple bias translation network if needed so the devices stay in triode over the expected signal swing around VREF.
+- Do not use diode stabilizers, behavioral resistors, switches, or source sweeps.
+
+Set the amplifier closed-loop gain slightly above 3 for startup:
+- Feed Vinn from a resistive negative-feedback divider referenced to VREF.
+- Choose the divider ratio for nominal non-inverting gain around 3.1 to 3.3 at the chosen Vctrl operating point so oscillation starts reliably.
+- Let amplitude settle by the primitive amplifier’s finite output swing / gm compression rather than diode AGC, since diodes are forbidden.
+
+Vin handling:
+- Vin is still required as an explicit input node even though this is an autonomous oscillator.
+- Do not leave Vin floating. Drive Vin with an explicit independent source.
+- Use Vin as a weak startup injection into Vinp through a large resistor or a small coupling capacitor, so the named node is electrically present without dominating steady-state oscillation.
+- The nominal design should still oscillate with Vin set to 0 V DC plus a very small transient perturbation or tiny sine component.
+
+Required devices:
+- MOSFETs only for the op-amp core and the Vctrl-sensitive resistor pair.
+- Op-amp core: NMOS differential input pair, PMOS active-mirror load, NMOS or PMOS second gain stage, bias current sources/mirrors, and a Miller compensation capacitor if needed for stable amplifier behavior.
+- Passive devices: matched capacitors C1 and C2, feedback resistors around the amplifier, VREF divider/buffer resistors, startup injection resistor from Vin, and any small source-degeneration or bounding resistors needed for the triode resistors.
+- Independent sources: VDD supply source, explicit source for Vctrl, and explicit source for Vin.
+
+Biasing assumptions:
+- Single-supply operation: VDD = 12 V, VSS = 0 V.
+- Mid-supply reference: VREF = 6 V generated by a resistor divider and lightly decoupled; use it to bias Vinp-side RC elements and the amplifier feedback network.
+- MOS bulk connections: tie bulk to source for discrete idealized primitive use unless a shared-substrate process assumption is explicitly chosen in the final deck.
+- Size transistors modestly, not aggressively. Use a reasonably strong input pair and output stage so the loop has enough gain at the intended oscillation frequency, but avoid huge devices that overload the RC bridge.
+- Choose the nominal Vctrl so the variable resistors sit in a practical middle range, giving a nominal oscillation frequency in a comfortable transient-simulation band such as low-kHz to tens-of-kHz.
+
+Key interconnectivity:
+- Vout drives the Wien bridge.
+- Wien bridge output returns to Vinp.
+- Vin weakly injects into Vinp through a large resistor or small capacitor.
+- Vinn receives the resistive feedback divider from Vout to VREF that sets non-inverting gain slightly above 3.
+- Vctrl biases the matched MOS variable-resistor pair in the Wien network only; it is the sole intended frequency-control path.
+- Vout is the required output node and must be directly observable in transient analysis.
+
+Expected behavior:
+- At the nominal Vctrl setting, transient analysis should show startup from noise/perturbation and then sustained oscillation at Vout.
+- The waveform at Vout should be approximately sinusoidal and centered around VREF in the internal signal path, with output swing limited by the op-amp core’s headroom.
+- Changing Vctrl in separate external runs should change the effective bridge resistance and therefore shift oscillation frequency monotonically. This frequency-versus-control behavior must come from the matched Vctrl-sensitive RC elements, not from any internal sweep construct.
+
+Analyses required:
+- Operating point to confirm all bias nodes, especially VREF, Vinp, Vinn, op-amp tail currents, and the Vctrl-controlled resistor devices, are in sensible regions.
+- Transient analysis long enough to show startup and several steady-state cycles at one nominal Vctrl. Use a small startup perturbation if needed, but no multi-run control blocks.
+- Optional Fourier or zero-crossing measurement is acceptable in the final deck to estimate nominal oscillation frequency, but the deck must remain a single nominal run.
+
+Output constraints:
+- Final netlist filename must be p29.cir.
+- The final netlist must contain the exact nodes Vin, Vctrl, and Vout.
+- Because the topology is op-amp-like, Vinp and Vinn must also be explicit net names.
+- No .step, .alter, or embedded multi-run control logic.
+- Use primitive-device SPICE only; no ideal op-amp macro, no behavioral VCVS-based oscillator core, and no diode limiter.

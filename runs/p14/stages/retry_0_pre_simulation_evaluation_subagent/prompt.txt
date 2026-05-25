@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Amplifier
+Task: A two-stage amplifier with a Miller compensation capacitor

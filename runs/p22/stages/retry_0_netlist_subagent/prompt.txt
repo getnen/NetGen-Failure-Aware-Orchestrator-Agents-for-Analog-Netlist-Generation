@@ -1,0 +1,122 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p22.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For oscillator tasks, expose internal op-amp input nodes named exactly Vinp and Vinn when using a direct transistor-level implementation, because the checker initializes those nodes for startup. Include a single-supply bias/reference near mid-supply, an amplifier stage with sufficient loop gain, and an RC feedback network that closes the intended oscillation loop around Vout. Avoid hard digital-style CMOS inverter output stages or strong clamp devices around the oscillation nodes unless they are intentionally gentle amplitude-control elements, because they often kill startup or create distorted multi-mode oscillation. Do not replace the analog gain stage with behavioral or controlled sources such as B/E/F/G/H elements; keep the oscillator core in primitive transistor-level SPICE.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a 5 V single-supply transistor-level RC phase-shift oscillator with output node exactly `Vout`. The oscillator core should be an inverting, high-gain MOS analog amplifier biased around mid-supply, followed by a three-section RC phase-shift ladder that feeds back from `Vout` to the amplifier input. The RC ladder supplies approximately 180 degrees of phase shift at the oscillation frequency; the inverting gain stage supplies the remaining 180 degrees.
+
+Target oscillation frequency should be in the approximate 5 kHz to 20 kHz range so `.tran 1u 5m` shows many visible cycles.
+
+**Device/Function List**
+
+- `VDD` supply source from `VDD` to ground, value 5 V.
+- Mid-supply reference generator producing `VREF` near 2.5 V, preferably a resistor divider from `VDD` to ground with optional bypass capacitor.
+- MOS transistor-level inverting gain stage:
+  - Output node must be `Vout`.
+  - Use real `NMOS`/`PMOS` devices only.
+  - Bulk terminals tied to each device source.
+  - Gain must comfortably exceed the passive RC ladder attenuation, typically requiring voltage gain greater than about 29 at startup.
+- Three RC ladder sections from `Vout` back to the amplifier input.
+- Bias resistors from RC/amplifier input nodes to `VREF` so no node floats in DC.
+- Startup assistance using `.ic` on one or more internal RC ladder/input nodes.
+
+**Bias/Reference Strategy**
+
+Bias the amplifier input and output operating point around `VREF = 2.5 V`. The gain stage should settle near mid-rail in `.op`, with enough headroom for `Vout` to swing above and below 2.5 V without immediately clipping.
+
+If using a single-ended common-source style gain block, bias the gate/input node near a valid operating point around `VREF`, and use active/current-source or resistive loading to obtain high gain.
+
+If using a transistor-level differential gain block, keep explicit input nodes such as `Vinp` and `Vinn`. Bias one input at `VREF`, feed the final RC ladder node into the other input, and ensure polarity gives net loop inversion through the amplifier.
+
+**Signal Or Feedback Path**
+
+Feedback path should be explicit:
+
+`Vout -> RC section 1 -> RC section 2 -> RC section 3 -> amplifier input`
+
+Use three cascaded RC sections referenced to `VREF`, not floating capacitive-only nodes. Example node roles:
+
+- `Vout`: amplifier output and oscillator output.
+- `n1`: first RC ladder internal phase node.
+- `n2`: second RC ladder internal phase node.
+- `n3` or amplifier input node: final phase-shifted feedback node.
+- `VREF`: AC reference / virtual ground for ladder shunt elements and amplifier bias.
+
+The final RC node drives the inverting amplifier input. Internal ladder nodes should show progressively shifted, lower-amplitude sine-like waveforms relative to `Vout`.
+
+**SPICE/Netlist Constraints**
+
+- Final filename: `p22.cir`.
+- Include node `Vout` exactly.
+- Include exactly:
+  - `.tran 1u 5m`
+- Use primitive SPICE devices: MOSFETs, resistors, capacitors, voltage sources.
+- Do not use behavioral sources, controlled sources, ideal op-amp macros, ideal limiters, or inverter-style rail-switching as the oscillator core.
+- Every internal RC node must have a DC path to `VREF` or ground.
+- Add `.ic` such as a small offset on the final RC node or amplifier input node to break perfect symmetry at startup.
+- Keep `Vout` unclamped unless normal transistor saturation naturally limits amplitude.
+
+**Failure Risks To Avoid**
+
+- Insufficient amplifier gain; the three-section RC ladder attenuates strongly, so loop gain must exceed unity at startup.
+- Floating RC ladder nodes caused by capacitors without DC bias paths.
+- Biasing the amplifier so `Vout` sits near a rail instead of near 2.5 V.
+- Accidentally building a hard CMOS inverter oscillator instead of an analog high-gain stage.
+- Using clamp diodes or ideal limiters on `Vout`, which can mask bad oscillator design.
+- Wrong feedback polarity: the RC ladder plus amplifier must produce total loop phase near 360 degrees.
+- R/C values that oscillate too slowly or too fast for `.tran 1u 5m`.
+- Perfectly symmetric initial conditions that prevent startup in transient simulation.
+
+=== NORMALIZED SPEC ===
+final_filename: p22.cir
+
+Objective: Create a 5 V single-supply RC phase-shift oscillator whose output node `Vout` develops a sustained visible periodic waveform during `.tran 1u 5m`. There are no external input nodes. The final netlist must include `Vout`.
+
+Topology: Use an inverting high-gain amplifier stage built from MOSFETs or an op-amp-like transistor gain block, biased around mid-supply, with a three-section RC phase-shift feedback network from `Vout` back to the amplifier input. The RC ladder should provide approximately 180 degrees phase shift near the oscillation frequency, while the inverting amplifier supplies the other 180 degrees. Ensure loop gain is comfortably greater than unity at startup.
+
+Required devices:
+- 5 V supply source: `VDD` to ground = 5 V.
+- Mid-supply bias/reference source or divider creating `VREF` near 2.5 V.
+- Inverting gain stage with output node exactly named `Vout`.
+- Three cascaded RC sections in the feedback path from `Vout` to the amplifier input node.
+- Bias resistors tying the amplifier input operating point to `VREF` so the single-supply circuit starts near mid-rail.
+- MOSFETs may use provided models `NMOS` and `PMOS`; connect each MOS bulk to its source.
+- Add startup assistance using `.ic` on internal feedback/amplifier input nodes or a slight initial mismatch between internal differential input nodes if using an op-amp-style gain stage.
+
+Key interconnectivity:
+- `Vout` feeds RC section 1, then RC section 2, then RC section 3.
+- The final RC ladder node drives the inverting/high-gain input of the amplifier.
+- The amplifier output is `Vout`.
+- The gain stage must be biased so `Vout` rests near mid-supply at operating point but can swing above and below that midpoint.
+- The RC network should be AC-coupled or DC-biased so no feedback node floats; every internal RC node needs a DC path to `VREF` or ground.
+- Choose R and C values that place oscillation within the 5 ms transient window, for example tens of kilohertz or lower. A practical target is roughly 5 kHz to 20 kHz so several cycles appear in `.tran 1u 5m`.
+
+Biasing assumptions:
+- Use `VDD = 5 V`.
+- Use `VREF = 2.5 V` as the amplifier common-mode/virtual-ground reference.
+- MOS thresholds are `NMOS Vth=0.7 V` and `PMOS Vth=-0.7 V`; size transistors nominally but make the gain stage strong enough that startup loop gain exceeds the RC ladder attenuation.
+- If a differential op-amp-like stage is used, bias its positive input at `VREF` and drive its negative input from the RC feedback ladder, or vice versa as needed to preserve net inverting loop behavior.
+- Include startup initial conditions such as a small offset on the final RC node or amplifier input node so oscillation grows from transient startup rather than remaining perfectly balanced.
+
+Required analysis:
+- Include exactly the required transient analysis: `.tran 1u 5m`.
+
+Expected behavior/output constraints:
+- `Vout` must oscillate visibly in transient simulation.
+- The latter portion of the 5 ms waveform should show sustained periodic behavior rather than a decaying transient.
+- `Vout` should remain within the 0 V to 5 V supply rails and preferably swing around the 2.5 V midpoint.
+- The RC ladder internal nodes should show progressively phase-shifted sinelike waveforms relative to `Vout`.
+- The final netlist must not leave hidden floating input nodes, must not depend on external stimulus inputs, and must include node `Vout` exactly.

@@ -1,0 +1,9 @@
+{
+  "status": "needs_repair",
+  "syntax_issues": [],
+  "topology_issues": [
+    "missing_cmos_pullup_or_pulldown_path"
+  ],
+  "repair_focus": "General topology repair focus: preserve requested nodes and bias sources, remove floating or over-constrained high-impedance nodes, and make the generated topology clearly realize the intended transfer function before tuning values. Use a real complementary pull-up/pull-down path tied to VDD and ground rather than a passive divider or ideal behavioral shortcut.",
+  "recommended_next_agent": "validator_subagent"
+}

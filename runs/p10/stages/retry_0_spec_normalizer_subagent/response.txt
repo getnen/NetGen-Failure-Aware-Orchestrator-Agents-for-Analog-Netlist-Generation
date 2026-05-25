@@ -1,0 +1,48 @@
+final_filename: p10.cir
+
+Objective:
+Implement a first-order passive RC low-pass filter with input node Vin and output node Vout. The filter should pass low frequencies with near-unity gain and attenuate high frequencies, with a corner frequency near 160 Hz.
+
+Topology:
+Use a standard passive RC low-pass network:
+- R1 = 1 kOhm in series from Vin to Vout
+- C1 = 1 uF from Vout to GND
+
+This gives fc ≈ 1 / (2*pi*R1*C1) ≈ 159 Hz.
+
+Required devices:
+- One independent AC voltage source to drive the input node
+- One resistor: R1 = 1 kOhm
+- One capacitor: C1 = 1 uF
+- Ground node 0
+
+Key interconnectivity:
+- Drive Vin explicitly with the independent source
+- Connect R1 between Vin and Vout
+- Connect C1 between Vout and 0
+- Do not rename Vin or Vout
+- Both Vin and Vout must appear as named nodes in the final netlist
+
+Input drive:
+The requested input must not be left floating. Use an AC source referenced to ground and connect it directly to Vin:
+- V1 Vin 0 AC 1
+
+Biasing / supply assumptions:
+- No DC supply rails are required for this passive filter
+- Ground (node 0) is the only reference node
+- Small-signal AC excitation is sufficient for the required analysis
+
+Expected behavior:
+- At low frequency, Vout should be approximately equal to Vin
+- Near 159-160 Hz, Vout magnitude should be about -3 dB relative to Vin
+- Above the corner, the roll-off should approach -20 dB/decade
+- The transfer function should be the standard single-pole low-pass response from Vin to Vout
+
+Required analysis:
+- .ac dec 20 1 1e9
+
+Output constraints:
+- Use primitive SPICE devices only
+- Preserve exact node names Vin and Vout
+- Include all requested input and output nodes in the final netlist
+- Final netlist should realize the passive RC low-pass directly, with no behavioral substitutions

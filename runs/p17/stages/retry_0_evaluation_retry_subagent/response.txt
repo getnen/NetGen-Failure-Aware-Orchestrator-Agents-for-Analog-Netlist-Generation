@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "retryable": false,
+  "summary": "Estimated output current: 0.0001\nOutput voltage: 4.0",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Estimated output current: 0.0001\nOutput voltage: 4.0",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

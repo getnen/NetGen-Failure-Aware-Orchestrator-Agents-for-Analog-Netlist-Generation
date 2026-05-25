@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019e5fff-6a81-74f3-805b-a4a48c42b768"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* RC high-pass filter\nV1 Vin 0 AC 1\nC1 Vin Vout 1u\nR1 Vout 0 1k\n.ac dec 20 1 1e9\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":14313,"cached_input_tokens":0,"output_tokens":221,"reasoning_output_tokens":169}}

@@ -1,0 +1,81 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p7.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a standard static CMOS inverter powered from a 5 V rail. `Vout` is the shared drain/output node between the pull-up PMOS and pull-down NMOS. `Vin` drives both transistor gates directly.
+
+When `Vin = 0 V`, PMOS is on and NMOS is off, so `Vout` is pulled to `VDD`. When `Vin = 5 V`, NMOS is on and PMOS is off, so `Vout` is pulled to ground.
+
+**Device/Function List**
+
+- `VDD` supply: independent DC voltage source from node `VDD` to `0`, value `5 V`.
+- Input source `Vin`: independent voltage source from node `Vin` to `0`, used as the `.dc` sweep source.
+- NMOS pull-down:
+  - Drain: `Vout`
+  - Gate: `Vin`
+  - Source: `0`
+  - Bulk: `0`
+  - Model: `NMOS`, threshold about `0.7 V`
+- PMOS pull-up:
+  - Source: `VDD`
+  - Gate: `Vin`
+  - Drain: `Vout`
+  - Bulk: `VDD`
+  - Model: `PMOS`, threshold about `-0.7 V`
+
+**Bias/Reference Strategy**
+
+`VDD` is fixed at `5 V` relative to ground node `0`. `Vin` is explicitly driven by its own independent voltage source and swept from `0 V` to `5 V`. Bulk terminals should be tied to their respective sources to avoid body-effect surprises in this simple inverter.
+
+**Signal Or Feedback Path**
+
+There is no feedback path. This is a direct combinational inverter: `Vin` controls both gates, and `Vout` is formed by the complementary pull-up/pull-down conduction path between `VDD` and `0`.
+
+**SPICE/Netlist Constraints**
+
+- Final file must be named `p7.cir`.
+- Preserve node names exactly: `Vin`, `Vout`.
+- Use exactly one NMOS and one PMOS transistor.
+- Include an independent DC input source named `Vin` so `.dc Vin 0 5 0.1` sweeps the source correctly.
+- Include primitive MOS models with thresholds:
+  - `NMOS` with `VTO = 0.7`
+  - `PMOS` with `VTO = -0.7`
+- Use primitive MOSFET devices only; no behavioral inverter or controlled-source shortcut.
+
+**Failure Risks To Avoid**
+
+- Do not leave `Vin` floating; it must be driven by an independent source named `Vin`.
+- Do not accidentally make `Vin` only a node name while the voltage source has another name, because `.dc Vin ...` must reference the source name.
+- Do not swap PMOS source/bulk away from `VDD`; PMOS source and bulk should both connect to `VDD`.
+- Do not swap NMOS source/bulk away from ground; NMOS source and bulk should both connect to `0`.
+- Do not use extra transistors, resistive loads, behavioral sources, or logic primitives.
+- Ensure `Vout` is only the shared output node between the PMOS drain and NMOS drain, not tied directly to `VDD` or ground.
+
+=== NORMALIZED SPEC ===
+final_filename: p7.cir
+
+Objective: create a 5 V logical inverter using exactly one NMOS and one PMOS, with input node Vin and output node Vout preserved exactly.
+
+Topology: implement a standard CMOS inverter. Connect the PMOS as the pull-up device from VDD to Vout, and the NMOS as the pull-down device from Vout to ground. Tie both gates directly to Vin so that low Vin turns the PMOS on and NMOS off, driving Vout high, while high Vin turns the NMOS on and PMOS off, driving Vout low.
+
+Required devices:
+Independent DC supply VDD from node VDD to 0 with value 5 V.
+Independent input source driving Vin from node Vin to 0, suitable for DC sweep.
+One NMOS transistor named with drain at Vout, gate at Vin, source at 0, bulk tied to source at 0, using NMOS model with Vth = 0.7 V.
+One PMOS transistor named with source at VDD, gate at Vin, drain at Vout, bulk tied to source at VDD, using PMOS model with Vth = -0.7 V.
+
+Biasing assumptions: VDD is fixed at 5 V. Vin is explicitly driven by an independent voltage source and swept from 0 V to 5 V. Ground node is 0. Use nominal MOS sizing unless otherwise specified, for example equal default W/L values are acceptable for this easy inverter brief.
+
+Analyses: include `.dc Vin 0 5 0.1` to sweep the independent input source named Vin from 0 V to 5 V in 0.1 V increments and observe the voltage transfer behavior at Vout.
+
+Output constraints: the final SPICE netlist must be saved as `p7.cir`. The exact node names `Vin` and `Vout` must appear in the netlist. No floating input nodes are allowed; Vin must be electrically driven by the independent input source.

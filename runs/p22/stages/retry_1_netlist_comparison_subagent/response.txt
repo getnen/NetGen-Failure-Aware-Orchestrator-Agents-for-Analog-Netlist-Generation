@@ -1,0 +1,53 @@
+{
+  "status": "distinct_or_unproven",
+  "similarity": 0.3943,
+  "repeated_failure_signature": false,
+  "previous_failure_type": "functional_error",
+  "current_failure_type": "functional_error",
+  "recommendation": "continue_current_route",
+  "current_signature": {
+    "element_counts": {
+      "v": 1,
+      "r": 8,
+      "c": 5
+    },
+    "models": [
+      "npn"
+    ],
+    "nodes": [
+      "emit",
+      "rc1",
+      "rc2",
+      "vdd",
+      "vinn",
+      "vinp",
+      "vout"
+    ],
+    "digest": "4f754b53b20eb5d2"
+  },
+  "previous_signature": {
+    "element_counts": {
+      "v": 3,
+      "c": 4,
+      "i": 1,
+      "m": 4,
+      "r": 5
+    },
+    "models": [
+      "nmos",
+      "pmos"
+    ],
+    "nodes": [
+      "d1",
+      "ntail",
+      "rc1",
+      "rc2",
+      "vcm",
+      "vdd",
+      "vinn",
+      "vinp",
+      "vout"
+    ],
+    "digest": "e6608a9895975b1c"
+  }
+}

@@ -1,0 +1,82 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p1.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+Single-stage NMOS common-source amplifier with a resistive drain load. The NMOS source and bulk are tied to ground, gate is driven by `Vin`, and drain is the output node `Vout`. A resistor `R` connects from `VDD` to `Vout`, converting NMOS drain-current variation into output voltage variation.
+
+**Device/Function List**
+- `VDD` supply: independent DC voltage source from node `VDD` to ground, value `5 V`.
+- Input source: independent voltage source driving `Vin`, with DC bias around `1.2 V` and AC magnitude `1` for gain analysis.
+- NMOS transistor:
+  - Model name: `NMOS`
+  - Drain: `Vout`
+  - Gate: `Vin`
+  - Source: ground
+  - Bulk: ground
+  - Dimensions: `W=50u`, `L=1u`
+- Load resistor `R`: from `VDD` to `Vout`, nominal `50k`, allowed range `10k` to `100k`.
+
+**Bias/Reference Strategy**
+Use ground as the source, bulk, and global reference. Bias `Vin` near `1.2 V`, giving expected overdrive of about `0.5 V` assuming `Vth=0.7 V`. Choose `R=50k` initially, then verify `.op` keeps `Vout` above roughly `Vin - Vth`, preferably above `0.5 V`, so the NMOS remains in saturation.
+
+**Signal or Feedback Path**
+Small-signal input is applied at `Vin` to the NMOS gate. Increasing `Vin` increases drain current, increasing the voltage drop across `R`, so `Vout` decreases. Expected gain is inverting. There is no intentional feedback path; only intrinsic MOS capacitances and output resistance contribute parasitic feedback/finite bandwidth behavior.
+
+**SPICE/Netlist Constraints**
+- Final file must be named `p1.cir`.
+- Preserve node names exactly: `Vin`, `Vout`.
+- `Vin` must be driven by an explicit independent voltage source, not left as a bare node.
+- `Vout` must be the NMOS drain and amplifier output.
+- Include `.op`.
+- Include `.ac dec 20 1 1e9`.
+- Define model `NMOS` explicitly with `Vth=0.7 V` and `kp=100u`.
+- MOSFET instance must use `W=50u` and `L=1u`.
+- Use `R` between `VDD` and `Vout`, nominally `50k`.
+
+**Failure Risks to Avoid**
+- Do not swap drain/source such that `Vout` is not the drain.
+- Do not leave NMOS bulk floating; tie it to ground.
+- Do not omit the explicit `Vin` voltage source or its AC magnitude.
+- Do not bias `Vin` below `1.2 V`.
+- Do not choose `R` so large that `Vout` collapses near ground and forces triode operation.
+- Do not rename required nodes to lowercase or aliases such as `vin`, `out`, or `vout`.
+- Do not write a PMOS load or current-source load; the requested load is resistive `R`.
+
+=== NORMALIZED SPEC ===
+final_filename: p1.cir
+
+Objective: Create a single-stage NMOS common-source voltage amplifier using a resistive load, with input node `Vin` and output node `Vout`.
+
+Topology: Use one NMOS transistor in common-source configuration. Connect the NMOS drain to `Vout`, source to ground, bulk tied to source/ground, and gate driven by `Vin`. Connect a resistive load `R` from `VDD` to `Vout`.
+
+Required devices:
+- Independent DC supply `VDD` from node `VDD` to ground, value 5 V.
+- Independent input source driving node `Vin`, with DC bias at or above 1.2 V and small-signal AC magnitude for gain analysis.
+- One NMOS transistor using model `NMOS`, with W=50u and L=1u.
+- One resistor load `R` from `VDD` to `Vout`, value between 10k and 100k ohm. Use a nominal value such as 50k unless otherwise optimized.
+
+Biasing assumptions:
+- Bias `Vin` with DC value around 1.2 V to satisfy the requirement that the NMOS gate is at least 1.2 V.
+- With source at ground and gate at 1.2 V, expected overdrive is about 0.5 V using Vth=0.7 V.
+- Choose the load resistor so the DC drain voltage at `Vout` remains high enough for saturation: approximately `Vout >= Vin - Vth`, so target `Vout > 0.5 V`.
+- NMOS bulk must be tied to source/ground.
+
+Analyses:
+- Include `.op` to verify DC operating point, drain voltage, current, and saturation condition.
+- Include `.ac dec 20 1 1e9` to evaluate small-signal voltage gain from `Vin` to `Vout`.
+
+Output constraints:
+- The final SPICE netlist must be saved as `p1.cir`.
+- Nodes `Vin` and `Vout` must appear exactly with those names.
+- `Vin` must be electrically driven by an explicit independent voltage source.
+- `Vout` must be the NMOS drain and amplifier output node.
+- Use explicit MOSFET model definitions matching: NMOS Vth=0.7 V, kp=100u, W=50u, L=1u.

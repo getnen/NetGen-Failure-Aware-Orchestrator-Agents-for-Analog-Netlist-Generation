@@ -1,0 +1,14 @@
+{
+  "failure_signatures": [
+    {
+      "failure_type": "functional_error",
+      "summary_prefix": "Functional evaluation failed on retry 0.\nFailure type: functional_error\nSuggested next stage: validator_subagent\n\nEvaluator report:\nOutput amplitude: 0.01999999\nOutput stddev: 0.005778111621942732\nTail amplitude: 0.01000622234\nTail stddev: "
+    },
+    {
+      "failure_type": "functional_error",
+      "summary_prefix": "Functional evaluation failed on retry 1.\nFailure type: functional_error\nSuggested next stage: validator_subagent\n\nEvaluator report:\nOutput amplitude: 0.01999999\nOutput stddev: 0.005777248374652402\nTail amplitude: 0.01000589804\nTail stddev: "
+    }
+  ],
+  "previous_netlist": "* 5V single-supply transistor RC phase-shift oscillator\nVDD VDD 0 DC 5\n\nRBIAS1 VDD Vinp 100k\nRBIAS2 Vinp 0 47k\nCSTART Vinp 0 1p\n\n* Q1 Vout Vinp emit NPN\nRC VDD Vout 2.2k\nRE emit 0 330\nCE emit 0 47u\n\nC1 Vout rc1 10n\nR1 rc1 0 6.8k\nC2 rc1 rc2 10n\nR2 rc2 0 6.8k\nC3 rc2 Vinn 10n\nR3 Vinn Vinp 6.8k\nRFB Vinn Vinp 1Meg\n\n.model NPN NPN IS=1e-15 BF=200 VAF=100 CJE=2p CJC=1p TF=0.3n\n\n.ic V(Vinp)=1.62 V(Vinn)=1.63 V(rc1)=1.4 V(rc2)=1.5 V(Vout)=2.8 V(emit)=0.95\n.tran 1u 20m uic\n.end\n",
+  "previous_failure_type": "functional_error"
+}

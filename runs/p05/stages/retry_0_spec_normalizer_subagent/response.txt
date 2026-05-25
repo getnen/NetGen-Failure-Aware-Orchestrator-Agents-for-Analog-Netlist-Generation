@@ -1,0 +1,21 @@
+final_filename: p5.cir
+
+Objective: Design a single-stage NMOS cascode amplifier with input node Vin, cascode bias node Vbias, and single-ended output node Vout. The circuit should provide voltage gain at Vout through a resistive load connected to VDD = 5 V.
+
+Topology: Use two stacked NMOS transistors. The lower NMOS is the common-source input device with its gate driven by Vin, source at ground, and drain connected to the source of the upper NMOS. The upper NMOS is the cascode device with its gate driven by Vbias, drain connected to Vout, and source connected to the lower NMOS drain. A resistor Rload connects from VDD to Vout.
+
+Required devices:
+- M1: lower NMOS input transistor, drain at internal cascode node, gate at Vin, source at 0, bulk tied to source.
+- M2: upper NMOS cascode transistor, drain at Vout, gate at Vbias, source at internal cascode node, bulk tied to source.
+- Rload: resistor from VDD to Vout, choose a value in the required 10k to 100k range, nominally 50k.
+- VDD source: independent DC source from VDD to 0 with value 5 V.
+- Vin source: explicit independent source driving Vin. Use a DC bias above threshold, nominally 1.2 V, with small-signal AC magnitude 1 for gain analysis.
+- Vbias source: explicit independent DC source driving Vbias. Use threshold-aware cascode bias, nominally 2.5 V, satisfying NMOS gate bias >= 1.2 V and allowing M1/M2 saturation.
+
+Biasing assumptions: NMOS model uses Vth = 0.7 V, kp = 100u, W = 50u, L = 1u. Tie each NMOS bulk to its own source. Bias Vin around 1.2 V so M1 conducts with moderate overdrive. Bias Vbias around 2.5 V so M2 remains on and the intermediate cascode node is held high enough for M1 saturation while leaving output headroom through Rload.
+
+Analyses:
+- Include `.op` to verify DC operating point, transistor conduction, and saturation margins.
+- Include `.ac dec 20 1 1e9` to measure small-signal gain from Vin to Vout.
+
+Output constraints: The final SPICE netlist must contain exact node names Vin, Vbias, and Vout. Vin and Vbias must be electrically driven by explicit independent voltage sources. Vout must be the single-ended amplifier output at the drain of the cascode NMOS and bottom of the resistive load. No subcircuits or hidden floating input nodes should be used.

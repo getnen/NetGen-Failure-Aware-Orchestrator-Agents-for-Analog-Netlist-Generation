@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019de8fd-a5da-7203-818e-0ec4819566e1"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* Three-stage NMOS common-source voltage amplifier\nVDD VDD 0 DC 5\nVIN Vin 0 DC 1.5 AC 1\nR1 VDD n1 47k\nR2 VDD n2 47k\nR3 VDD Vout 47k\nM1 n1 Vin 0 0 NMOS W=50u L=1u\nM2 n2 n1 0 0 NMOS W=50u L=1u\nM3 Vout n2 0 0 NMOS W=50u L=1u\n.model NMOS NMOS LEVEL=1 VTO=1.2 KP=33u LAMBDA=0.02\n.op\n.ac dec 20 1 1e9\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":24722,"cached_input_tokens":21376,"output_tokens":543,"reasoning_output_tokens":372}}

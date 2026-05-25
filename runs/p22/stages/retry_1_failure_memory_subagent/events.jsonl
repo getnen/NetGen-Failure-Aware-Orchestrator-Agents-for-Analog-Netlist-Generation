@@ -1,0 +1,1 @@
+{"type": "mock.stage", "stage": "retry_1_failure_memory_subagent", "notes": "failure_type=functional_error"}

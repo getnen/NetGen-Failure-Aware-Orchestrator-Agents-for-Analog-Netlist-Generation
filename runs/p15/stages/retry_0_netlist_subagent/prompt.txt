@@ -1,0 +1,107 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p15.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Single-stage MOS common-source amplifier with an NMOS pull-down gain device and a diode-connected PMOS active load. Use exact port nodes `Vin` and `Vout`. The output node `Vout` is the shared NMOS drain and PMOS gate/drain node.
+
+**Device/Function List**
+
+- `VDD` source: independent DC supply from `VDD` to `0`, value `5 V`.
+- `Vin` source: independent voltage source from `Vin` to `0`, with DC bias around `1.5 V` and AC magnitude `1`.
+- `M1` NMOS common-source transistor:
+  - drain = `Vout`
+  - gate = `Vin`
+  - source = `0`
+  - bulk = `0`
+  - function: input-controlled pull-down/gain device.
+- `M2` PMOS diode-connected active load:
+  - drain = `Vout`
+  - gate = `Vout`
+  - source = `VDD`
+  - bulk = `VDD`
+  - function: nonlinear load/current source-like pull-up with local diode feedback.
+- Optional load resistor from `Vout` to `0` only if needed, preferably omitted unless required; if used, choose `50k` within the allowed `10k` to `100k`.
+
+**Bias/Reference Strategy**
+
+Ground is node `0`. `VDD` is fixed at `5 V`. `Vin` must have an explicit DC gate bias, preferably `1.5 V`, so `M1` conducts with `VGS > Vth`. The expected DC operating point should settle with `0 < Vout < 5 V`, both MOSFETs on, and `M1` preferably in saturation with:
+
+```spice
+VDS >= VGS - Vth
+```
+
+For `M1`, this means `Vout >= Vin - 0.7 V`.
+
+**Signal Or Feedback Path**
+
+Small-signal input at `Vin` modulates NMOS drain current. Increased `Vin` increases `M1` current, pulling `Vout` lower, so voltage gain should be inverting.
+
+The PMOS gate-drain short at `Vout` creates local negative feedback in the load: as `Vout` moves, PMOS overdrive changes, producing a finite small-signal diode resistance from `Vout` to `VDD`. This load reduces gain compared with an ideal current-source load but stabilizes the DC operating point.
+
+**SPICE/Netlist Constraints**
+
+- Final filename must be `p15.cir`.
+- Preserve exact node names `Vin` and `Vout`.
+- Include `.op`.
+- Include `.ac dec 20 1 1e9`.
+- Do not use subcircuits.
+- Do not use placeholder model names.
+- Include explicit `.model` statements for NMOS and PMOS with:
+  - NMOS: `VTO=0.7`, `KP=100u`
+  - PMOS: `VTO=-0.7`, `KP=50u`
+- Use `W=50u L=1u` for `M1`.
+- Use `W=100u L=1u` for `M2`.
+
+**Failure Risks To Avoid**
+
+- Do not leave `Vin` floating or define it as AC-only without DC bias.
+- Do not swap PMOS source/drain such that the source is not at `VDD`.
+- Do not forget the PMOS diode connection: both gate and drain must be tied to `Vout`.
+- Do not tie NMOS bulk anywhere except `0`.
+- Do not tie PMOS bulk anywhere except `VDD`.
+- Avoid choosing too low a `Vin` DC bias; below about `1.2 V`, `M1` may be weak or off.
+- Avoid adding a strong resistive load that dominates the PMOS diode load and destroys the requested topology behavior.
+
+=== NORMALIZED SPEC ===
+final_filename: p15.cir
+
+Objective: Create a single-stage MOS common-source voltage amplifier using input node Vin and output node Vout. The circuit must operate from VDD = 5 V and be verified with DC operating point and AC small-signal analysis.
+
+Topology: Use one NMOS transistor as the common-source amplifying device and one PMOS transistor as a diode-connected active load. The NMOS drain connects to Vout, the NMOS source connects to ground, and the NMOS gate is driven by Vin. The PMOS source connects to VDD, and its gate and drain are shorted together at Vout, forming the diode-connected load.
+
+Required devices:
+- VDD independent DC voltage source from node VDD to ground, value 5 V.
+- Vin independent input source connected from Vin to ground. It should provide a DC gate bias of at least 1.2 V, preferably around 1.5 V, with a small-signal AC magnitude of 1 V for gain extraction.
+- NMOS M1 with drain=Vout, gate=Vin, source=0, bulk=0. Model parameters: Vth=0.7 V, kp=100u, W=50u, L=1u.
+- PMOS M2 diode-connected load with source=VDD, gate=Vout, drain=Vout, bulk=VDD. Model parameters: Vth=-0.7 V, kp=50u, W=100u, L=1u.
+- Optional resistive load from Vout to ground may be included only if needed to satisfy loading requirements, within 10k to 100k ohm. If included, choose a nominal value such as 50k ohm. The primary requested load behavior is the PMOS diode-connected load.
+
+Biasing assumptions:
+- Ground node is 0.
+- VDD is fixed at 5 V.
+- Vin must be explicitly driven by an independent voltage source, not left floating.
+- NMOS gate DC bias must be >= 1.2 V to ensure conduction and support saturation-region operation.
+- NMOS bulk should be tied to its source.
+- PMOS bulk should be tied to its source at VDD.
+- The operating point should place Vout between ground and VDD with both devices on; verify NMOS saturation using VDS >= VGS - Vth.
+
+Required analyses:
+- `.op`
+- `.ac dec 20 1 1e9`
+
+Output constraints:
+- The final SPICE netlist must be saved as `p15.cir`.
+- The exact input node name `Vin` must appear in the netlist.
+- The exact output node name `Vout` must appear in the netlist.
+- Do not use subcircuits or placeholder model names.
+- Include explicit NMOS and PMOS `.model` statements matching the given thresholds and transconductance parameters.

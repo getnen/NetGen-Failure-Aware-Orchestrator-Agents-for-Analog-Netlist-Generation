@@ -1,0 +1,39 @@
+* Primitive-device non-inverting CMOS Schmitt trigger with explicit VTH summing node
+VDD VDD 0 5
+VREF VREF 0 2.5
+Vin Vin 0 PWL(0m 0 5m 0 10m 5 15m 5 20m 0 25m 0)
+
+Rin Vin VTH 100k
+Rfb Vout VTH 330k
+Rref VREF VTH 120k
+
+Ibias VDD NBIAS 20u
+MNB NBIAS NBIAS 0 0 NMOS L=1u W=20u
+MTAIL NTAIL NBIAS 0 0 NMOS L=1u W=20u
+
+MINP N1 VTH NTAIL 0 NMOS L=1u W=30u
+MREF N2 VREF NTAIL 0 NMOS L=1u W=30u
+
+MP1 N1 N1 VDD VDD PMOS L=1u W=60u
+MP2 N2 N1 VDD VDD PMOS L=1u W=60u
+
+MNOUT NINT N2 0 0 NMOS L=1u W=40u
+MPOUT NINT N2 VDD VDD PMOS L=1u W=80u
+
+MNBUF Vout NINT 0 0 NMOS L=0.8u W=20u
+MPBUF Vout NINT VDD VDD PMOS L=0.8u W=40u
+Cload Vout 0 20f
+
+.model NMOS NMOS (LEVEL=1 VTO=0.75 KP=220u LAMBDA=0.03 GAMMA=0.45 PHI=0.7)
+.model PMOS PMOS (LEVEL=1 VTO=-0.75 KP=90u LAMBDA=0.03 GAMMA=0.45 PHI=0.7)
+
+.op
+.tran 0.02m 25m uic
+.dc Vin 0 5 0.01
+.meas tran T_RISE WHEN V(Vout)=2.5 RISE=1
+.meas tran VIN_RISE FIND V(Vin) AT=T_RISE
+.meas tran T_FALL WHEN V(Vout)=2.5 FALL=1
+.meas tran VIN_FALL FIND V(Vin) AT=T_FALL
+.meas tran HYST PARAM='VIN_RISE-VIN_FALL'
+
+.end

@@ -1,0 +1,104 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+Do not leave commented-out candidate SPICE elements in the returned deck; remove dead alternatives instead of commenting them out.
+If a stage or limiter is not used, delete every dependent helper node reference instead of returning a half-disabled structure.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p10.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a first-order passive RC low-pass: `R1 = 1 kOhm` in series from `Vin` to `Vout`, and `C1 = 1 uF` from `Vout` to ground `0`. Drive `Vin` with a ground-referenced independent AC source. This realizes a single-pole low-pass with corner frequency near `1 / (2*pi*R1*C1) ≈ 159 Hz`.
+
+**Device / Function List**
+
+- `V1`: independent AC voltage source, drives `Vin` relative to `0`
+- `R1`: series element between `Vin` and `Vout`; with `C1` sets the pole
+- `C1`: shunt capacitor from `Vout` to `0`; bypasses high-frequency content to ground
+- `0`: only reference node / ground
+
+**Bias / Reference Strategy**
+
+No supply rails or active biasing are needed. Use node `0` as the only reference. The input must not float: the AC source should connect directly to `Vin` and `0`. Small-signal AC excitation is sufficient.
+
+**Signal / Feedback Path**
+
+Signal path is `Vin -> R1 -> Vout`.  
+There is no active feedback loop; the only frequency-dependent return path is the passive shunt through `C1` from `Vout` to ground. At low frequency, `C1` is effectively open so `Vout ~ Vin`; at high frequency, `C1` increasingly shorts `Vout` to ground, reducing output.
+
+**SPICE / Netlist Constraints**
+
+- Preserve exact node names `Vin` and `Vout`
+- Both `Vin` and `Vout` must appear explicitly as named nodes
+- Use only primitive devices: independent source, resistor, capacitor
+- Keep the intended analysis as `.ac dec 20 1 1e9`
+- Do not introduce behavioral elements, controlled sources, or extra parasitics unless explicitly requested
+
+**Failure Risks to Avoid**
+
+- Do not swap resistor/capacitor placement; that can change the response or create a high-pass topology
+- Do not place the output on the wrong side of `R1`; `Vout` must be the RC junction
+- Do not leave `Vin` undriven or floating
+- Do not rename `Vin` or `Vout`
+- Do not add unintended load resistance at `Vout`, since it will shift the pole and reduce low-frequency gain
+- Do not add source resistance in series with the AC source unless that change is intentional, because it alters the effective `R` and cutoff frequency
+
+Expected AC behavior: near-unity gain at low frequency, about `-3 dB` near `159-160 Hz`, and asymptotic `-20 dB/decade` roll-off above the pole.
+
+=== NORMALIZED SPEC ===
+final_filename: p10.cir
+
+Objective:
+Implement a first-order passive RC low-pass filter with input node Vin and output node Vout. The filter should pass low frequencies with near-unity gain and attenuate high frequencies, with a corner frequency near 160 Hz.
+
+Topology:
+Use a standard passive RC low-pass network:
+- R1 = 1 kOhm in series from Vin to Vout
+- C1 = 1 uF from Vout to GND
+
+This gives fc ≈ 1 / (2*pi*R1*C1) ≈ 159 Hz.
+
+Required devices:
+- One independent AC voltage source to drive the input node
+- One resistor: R1 = 1 kOhm
+- One capacitor: C1 = 1 uF
+- Ground node 0
+
+Key interconnectivity:
+- Drive Vin explicitly with the independent source
+- Connect R1 between Vin and Vout
+- Connect C1 between Vout and 0
+- Do not rename Vin or Vout
+- Both Vin and Vout must appear as named nodes in the final netlist
+
+Input drive:
+The requested input must not be left floating. Use an AC source referenced to ground and connect it directly to Vin:
+- V1 Vin 0 AC 1
+
+Biasing / supply assumptions:
+- No DC supply rails are required for this passive filter
+- Ground (node 0) is the only reference node
+- Small-signal AC excitation is sufficient for the required analysis
+
+Expected behavior:
+- At low frequency, Vout should be approximately equal to Vin
+- Near 159-160 Hz, Vout magnitude should be about -3 dB relative to Vin
+- Above the corner, the roll-off should approach -20 dB/decade
+- The transfer function should be the standard single-pole low-pass response from Vin to Vout
+
+Required analysis:
+- .ac dec 20 1 1e9
+
+Output constraints:
+- Use primitive SPICE devices only
+- Preserve exact node names Vin and Vout
+- Include all requested input and output nodes in the final netlist
+- Final netlist should realize the passive RC low-pass directly, with no behavioral substitutions

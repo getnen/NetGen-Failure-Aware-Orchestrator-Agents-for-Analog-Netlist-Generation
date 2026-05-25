@@ -1,0 +1,153 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+Do not leave commented-out candidate SPICE elements in the returned deck; remove dead alternatives instead of commenting them out.
+If a stage or limiter is not used, delete every dependent helper node reference instead of returning a half-disabled structure.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p9.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+=== TOPOLOGY PLAN ===
+**Topology summary**
+
+Use a single-supply CMOS comparator with:
+
+- An NMOS differential pair as the input stage.
+- A PMOS active current-mirror load to create one high-gain single-ended internal node.
+- One CMOS inverter as the restoring/output stage, with final output node named `Vout`.
+
+Polarity choice matters: connect `Vin` to the NMOS on the **mirror-output/internal-node side**, and connect `Vref` to the NMOS on the **diode-connected mirror-reference side**. With that orientation, `Vin > Vref` drives the internal node low, and the inverter makes `Vout` high.
+
+**Device/function list**
+
+- Two NMOS input devices:
+  - `Vin` branch NMOS: gate = `Vin`, drain = first-stage internal node.
+  - `Vref` branch NMOS: gate = `Vref`, drain = mirror-reference node.
+- Two PMOS load devices:
+  - One diode-connected PMOS on the `Vref` branch.
+  - One mirrored PMOS on the `Vin` branch to form the high-gain node.
+- One NMOS tail current-source device below the joined input-pair sources.
+- One primitive bias generator for the tail source:
+  - Preferred: diode-connected NMOS plus resistor creating a gate bias node for the tail device.
+- One CMOS inverter:
+  - PMOS pull-up and NMOS pull-down.
+  - Input = first-stage internal node.
+  - Output = `Vout`.
+- Independent sources for `VDD`, `Vin`, and `Vref`.
+- Optional small capacitor from `Vout` to `VSS`.
+
+**Bias/reference strategy**
+
+- `VDD = 5 V`, `VSS = 0 V`.
+- Drive `Vref` from an explicit DC source, nominally `2.5 V`.
+- Drive `Vin` from an explicit source:
+  - DC sweep: `0 V` to `5 V`.
+  - Transient: slow ramp or pulse crossing `Vref`.
+- Bias the NMOS tail current to roughly `20 uA` to `100 uA`.
+- Standard bulk ties:
+  - NMOS bulk to `VSS`
+  - PMOS bulk to `VDD`
+
+**Signal or feedback path**
+
+- `Vin > Vref`:
+  - `Vin`-side NMOS pulls harder.
+  - Mirror-reference branch current drops.
+  - Mirrored PMOS current into the internal node drops.
+  - Internal node falls.
+  - Inverter drives `Vout` high.
+- `Vin < Vref`:
+  - Internal node rises.
+  - Inverter drives `Vout` low.
+
+There is no intentional regenerative positive feedback or hysteresis in this plan; switching sharpness comes from first-stage gain plus inverter restoration.
+
+**SPICE/netlist constraints**
+
+- Preserve node names exactly: `Vin`, `Vout`, and explicit `Vref`.
+- Keep `Vin` and `Vref` externally driven; neither may float.
+- `Vout` must be the inverter output, not the first-stage node.
+- Use only primitive MOS devices, resistor, capacitor, and independent sources.
+- Do not replace the comparator with behavioral elements or controlled-source shortcuts.
+- Keep the first-stage internal node separate from the diode-connected mirror-reference node.
+
+**Failure risks to avoid**
+
+- Do not swap the `Vin` and `Vref` branch placement; that flips comparator polarity.
+- Do not take the main first-stage output from the diode-connected load node; it has weaker gain.
+- Do not leave the tail-bias node floating; the bias network must define startup and DC current.
+- Do not oversize the output inverter so much that it heavily loads the internal node and softens the transition.
+- Do not expect rail-to-rail precision input common-mode behavior; this simple NMOS-input topology is best centered around mid-supply.
+- With no hysteresis, very slow or noisy crossings near `Vin = Vref` can cause chatter in transient analysis.
+
+=== NORMALIZED SPEC ===
+final_filename: p9.cir
+
+Objective:
+Implement a primitive-device MOS comparator that drives Vout high when Vin > Vref and drives Vout low when Vin < Vref, with a sharp switching region around Vin = Vref.
+
+Supply convention:
+Use a single-supply CMOS implementation with VDD = 5 V and VSS = 0 V. This is a reasonable comparator supply for an easy primitive-device SPICE design and allows a rail-referenced digital-like output. If a lower-voltage process is preferred later, the same topology can be scaled.
+
+Topology:
+Use a two-stage comparator-like amplifier:
+1. NMOS differential input pair for Vin versus Vref comparison.
+2. PMOS active-mirror load to convert differential current to large single-ended voltage gain.
+3. CMOS inverter or common-source output stage to sharpen the transition and restore a rail-to-rail Vout.
+
+Required devices:
+- Two NMOS input transistors for the differential pair.
+- Two PMOS transistors as an active-current-mirror load.
+- One NMOS tail current source transistor.
+- One simple primitive bias network for the tail current source, preferably a diode-connected NMOS plus resistor or an explicit DC bias source if allowed by the framework.
+- One CMOS inverter output buffer, or equivalently one NMOS/one PMOS gain-restoration stage, with output node named Vout.
+- Independent voltage sources for VDD, Vin, and Vref.
+- Optional small load capacitor at Vout for transient realism.
+
+Key interconnectivity:
+- Gate of one input NMOS connects to Vin.
+- Gate of the other input NMOS connects to Vref.
+- Sources of the two input NMOS devices join at a tail node.
+- Tail node connects to an NMOS current-source device to VSS.
+- Drains of the differential pair connect to PMOS active-load devices tied to VDD.
+- The PMOS load should be connected as a current mirror so the first stage produces high differential gain and a strong single-ended internal node.
+- That internal high-gain node feeds a CMOS inverter or second gain stage.
+- The final stage output node must be Vout.
+- NMOS bulks tie to VSS or their sources if isolated-body modeling is used; PMOS bulks tie to VDD or their sources if isolated-body modeling is used. If using standard 4-terminal bulk-aware MOS primitives, use the usual CMOS well ties: NMOS bulk to VSS, PMOS bulk to VDD.
+
+Biasing assumptions:
+- Choose Vref as an explicit independent DC source, for example 2.5 V, so the switching point is centered in the single-supply range.
+- Drive Vin with an explicit independent source. For DC verification, sweep Vin from 0 V to 5 V. For transient verification, use a slow ramp or pulse that crosses Vref.
+- Set the tail current to a modest value, roughly 20 uA to 100 uA, so the first stage has clear gain without excessive power.
+- Use modest transistor sizing, with PMOS load devices somewhat wider than the NMOS input devices to compensate mobility. Example starting point:
+  NMOS input pair: W/L about 20u/1u
+  PMOS mirror load: W/L about 40u/1u
+  NMOS tail source: W/L about 10u/2u
+  CMOS output inverter: NMOS about 10u/1u, PMOS about 20u/1u
+These are starting values only; downstream sizing can be adjusted to center the transition and improve sharpness.
+
+Signal-path expectation:
+- When Vin rises above Vref, the Vin-side NMOS in the differential pair draws more current.
+- The active PMOS mirror converts that imbalance into a large voltage change at the first-stage output node.
+- The output inverter amplifies that node movement into a near-rail logic-like transition, making Vout high for Vin > Vref.
+- When Vin falls below Vref, the opposite current steering occurs and Vout is pulled low.
+- The transfer characteristic Vout versus Vin should show a steep transition near Vref, not a shallow linear gain region.
+
+Analysis required:
+- DC sweep: sweep Vin across the full input range while holding Vref fixed. This must show the switching threshold where Vout changes state.
+- Transient: apply a ramp or pulse on Vin that crosses Vref and verify that Vout switches sharply in time.
+- Optional operating-point analysis: confirm the input pair and tail source are biased in saturation near the decision point.
+- Optional parametric check: vary Vref or supply slightly to confirm the comparator still switches correctly.
+
+Output constraints:
+- Vout must be the final comparator output node.
+- Vin must be an externally driven named input node, not an internal floating node.
+- Vref must also be explicitly driven by an independent source.
+- Vout must transition sharply as Vin crosses Vref.
+- The implementation must remain primitive-device SPICE, not a behavioral comparator or controlled-source shortcut.

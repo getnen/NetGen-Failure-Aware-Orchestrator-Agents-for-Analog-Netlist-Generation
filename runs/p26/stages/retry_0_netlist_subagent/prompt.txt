@@ -1,0 +1,112 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p26.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a classic inverting summing amplifier. `Vin1` and `Vin2` each feed a shared inverting summing node through equal resistors. The opamp non-inverting input is tied to ground. A feedback resistor connects `Vout` back to the summing node, forcing the summing node near virtual ground and producing:
+
+`Vout = -Rf/R1 * Vin1 - Rf/R2 * Vin2`
+
+With `R1 = R2 = Rf`, the expected result is:
+
+`Vout = -(Vin1 + Vin2)`
+
+For `Vin1 = 1 V` and `Vin2 = 1 V`, expect `Vout ≈ -2 V`.
+
+**Device/Function List**
+
+- `V1`: independent DC source driving node `Vin1` to `1 V`.
+- `V2`: independent DC source driving node `Vin2` to `1 V`.
+- `R1`: input resistor from `Vin1` to the inverting summing node.
+- `R2`: input resistor from `Vin2` to the same summing node.
+- `Rf`: feedback resistor from `Vout` to the summing node.
+- Explicit primitive opamp model: high-gain dependent voltage source, preferably VCVS-style.
+- Positive supply source: create `+5 V` rail.
+- Negative supply source: create `-5 V` rail so `Vout = -2 V` is reachable.
+- Ground reference node: SPICE node `0`.
+
+**Bias/Reference Strategy**
+
+Tie the opamp non-inverting input directly to ground. The inverting node should settle close to `0 V` through negative feedback. Use equal resistors, nominally:
+
+- `R1 = 10k`
+- `R2 = 10k`
+- `Rf = 10k`
+
+Use high open-loop gain, for example `1e6`, in the primitive opamp model. Split supplies are required because the desired output is negative.
+
+**Signal Or Feedback Path**
+
+`Vin1 -> R1 -> summing node -> opamp -> Vout`
+
+`Vin2 -> R2 -> summing node -> opamp -> Vout`
+
+`Vout -> Rf -> summing node`
+
+Negative feedback through `Rf` drives the summing node near ground and makes the output the inverted sum of the two input voltages.
+
+**SPICE/Netlist Constraints**
+
+- Preserve node names exactly: `Vin1`, `Vin2`, `Vout`.
+- `Vin1` must be driven by an explicit independent DC voltage source.
+- `Vin2` must be driven by an explicit independent DC voltage source.
+- `Vout` must be the opamp output node.
+- Include `.op` analysis.
+- Do not use subcircuits or placeholders.
+- Use primitive SPICE elements only.
+- If using a VCVS opamp model, ensure its polarity makes negative feedback valid: output should rise when non-inverting input exceeds inverting input.
+
+**Failure Risks To Avoid**
+
+- Do not power the opamp from only `0 V` and `+5 V`; `Vout = -2 V` would saturate or be impossible.
+- Do not leave `Vin1`, `Vin2`, or the summing node floating.
+- Do not connect feedback to the non-inverting input.
+- Do not reverse the dependent-source input polarity, or the loop becomes positive feedback.
+- Do not choose unequal resistor values unless intentionally changing the input gains.
+- Do not use behavioral shortcuts or ideal algebraic output expressions instead of a primitive dependent-source opamp model.
+
+=== NORMALIZED SPEC ===
+final_filename: p26.cir
+
+Objective: Create a SPICE netlist for an inverting opamp adder with transfer function Vout = -(Vin1 + Vin2). The required operating point uses Vin1 = 1 V DC and Vin2 = 1 V DC, so the expected DC output is approximately Vout = -2 V if the opamp is powered from symmetric supplies or otherwise has sufficient negative output swing.
+
+Topology: Use an inverting summing amplifier. Connect Vin1 through input resistor R1 to the opamp inverting input node. Connect Vin2 through input resistor R2 to the same inverting input node. Connect feedback resistor Rf from Vout back to the inverting input node. Tie the opamp non-inverting input to ground reference so the inverting input operates as a virtual ground.
+
+Required devices:
+- Independent DC source V1 driving node Vin1 at 1 V.
+- Independent DC source V2 driving node Vin2 at 1 V.
+- Opamp modeled explicitly as a high-gain voltage-controlled voltage source or equivalent behavioral dependent source.
+- R1 from Vin1 to inverting summing node.
+- R2 from Vin2 to inverting summing node.
+- Rf from Vout to inverting summing node.
+- Opamp supply sources. Since the requested output is negative while VDD = 5 V is specified, use a split supply derived from the 5 V magnitude, for example +5 V and -5 V rails, so Vout = -2 V is physically reachable.
+
+Biasing assumptions:
+- Non-inverting opamp input is tied to 0 V.
+- The inverting summing node should settle near 0 V due to negative feedback.
+- Choose R1 = R2 = Rf so each input has unity inverting gain contribution.
+- Suggested nominal resistor values: R1 = R2 = Rf = 10 kOhm.
+- Use a high open-loop gain, such as 1e6, for the dependent-source opamp model.
+- Limit or avoid output saturation by ensuring the opamp rails include negative swing capability.
+
+Analysis:
+- Include `.op` operating point analysis.
+- Verify that Vin1 = 1 V, Vin2 = 1 V, the summing node is near 0 V, and Vout is approximately -2 V.
+
+Output constraints:
+- Node names Vin1, Vin2, and Vout must appear exactly in the final netlist.
+- Vin1 and Vin2 must each be driven by explicit independent DC voltage sources.
+- Vout must be the opamp output node.
+- Do not leave any requested input node floating.
+- Do not use placeholders or subcircuits.

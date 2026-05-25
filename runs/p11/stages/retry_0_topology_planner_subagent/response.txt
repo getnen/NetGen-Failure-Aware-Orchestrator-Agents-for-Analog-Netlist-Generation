@@ -1,0 +1,36 @@
+**Topology Summary**
+
+Use a first-order passive RC high-pass filter. Drive `Vin` with an explicit independent AC source referenced to node `0`. Place `C1` in series from `Vin` to `Vout`, and place `R1` from `Vout` to `0`. The output `Vout` is the capacitor/resistor junction. This gives DC blocking and passes higher-frequency content to the load resistor.
+
+**Device/Function List**
+
+- `V1`: independent AC source from `Vin` to `0`, AC magnitude `1`
+- `C1 = 1uF`: series coupling element between `Vin` and `Vout`
+- `R1 = 1k`: shunt/output return element from `Vout` to `0`
+
+**Bias/Reference Strategy**
+
+No supply rails are needed. Node `0` is the only reference. DC operating point is naturally defined because `R1` gives `Vout` a return to ground; `Vin` is explicitly driven by `V1`. No extra bias network is required for AC analysis.
+
+**Signal Or Feedback Path**
+
+Signal path is `V1 -> Vin -> C1 -> Vout`, with `R1` returning `Vout` to `0`. There is no active feedback path; this is a purely passive single-pole network. At low frequency, capacitor reactance is large so `Vout` is attenuated. At high frequency, capacitor reactance falls and `Vout` approaches `Vin`.
+
+**SPICE/Netlist Constraints**
+
+- Preserve node names exactly: `Vin`, `Vout`
+- Keep `V1` explicit from `Vin` to `0`
+- Connect `C1` only between `Vin` and `Vout`
+- Connect `R1` only between `Vout` and `0`
+- Use only primitive SPICE elements
+- Include `.ac dec 20 1 1e9`
+- Expected cutoff is about `1 / (2*pi*1k*1uF) ~= 159 Hz`
+
+**Failure Risks To Avoid**
+
+- Do not swap the RC order; `R1` must be the shunt element at `Vout`, not a series input resistor
+- Do not connect `Vout` on the source side of `C1`
+- Do not omit `R1`, or `Vout` will float
+- Do not rename or alias `Vin`/`Vout`
+- Do not replace the RC network with behavioral or controlled-source equivalents
+- Do not leave the input implicit; `Vin` must be directly driven by `V1`

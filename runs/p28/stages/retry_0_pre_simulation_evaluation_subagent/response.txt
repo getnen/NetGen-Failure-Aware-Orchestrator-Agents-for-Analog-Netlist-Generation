@@ -1,0 +1,9 @@
+{
+  "status": "needs_repair",
+  "syntax_issues": [],
+  "topology_issues": [
+    "multi_stage_cmos_output_chain_after_decision_core"
+  ],
+  "repair_focus": "General Schmitt-trigger repair focus: preserve explicit positive feedback into a distinct threshold node, keep a strong comparator-like primitive-device gain stage, anchor the threshold node to a real reference path, and avoid output clamp devices or weak pseudo-analog buffering that prevents full output switching and measurable hysteresis. Keep the threshold-node reference anchor in the same rough scale as the input and feedback paths, and avoid very weakly biased resistive-load decision cores that cannot regenerate a full transition.",
+  "recommended_next_agent": "validator_subagent"
+}

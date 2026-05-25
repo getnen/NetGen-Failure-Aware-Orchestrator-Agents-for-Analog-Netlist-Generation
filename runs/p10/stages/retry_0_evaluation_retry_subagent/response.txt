@@ -1,0 +1,22 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "failure_family": "",
+  "repair_scope": "done",
+  "retryable": false,
+  "summary": "Low-frequency gain: 0.9797217311707317\nMid-band gain: 0.0352109033402439\nHigh-frequency gain: 2.3970524525508198e-05\nLow-frequency gain (dB): -0.18\nMid-band gain (dB): -35.98\nHigh-frequency gain (dB): -105.96",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Low-frequency gain: 0.9797217311707317\nMid-band gain: 0.0352109033402439\nHigh-frequency gain: 2.3970524525508198e-05\nLow-frequency gain (dB): -0.18\nMid-band gain (dB): -35.98\nHigh-frequency gain (dB): -105.96",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

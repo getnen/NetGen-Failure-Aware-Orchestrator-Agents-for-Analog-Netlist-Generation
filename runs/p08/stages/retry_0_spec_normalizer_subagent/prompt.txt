@@ -1,0 +1,23 @@
+You are the spec normalizer subagent for a SPICE generation framework.
+Convert the user task into an implementation-ready circuit brief for downstream experts.
+Preserve the requested behavior and exact node names. Return plain text only.
+
+=== DESIGN GUIDANCE ===
+Start from circuit functionality, name the required devices, describe the key interconnectivity, biasing assumptions, and the analysis required to verify the behavior. Preserve the requested input and output node names exactly. If the task does not specify supply rails, choose and document a reasonable supply convention rather than assuming one fixed benchmark rail. Every requested input node must be electrically driven by an explicit independent source or by the exact source requested by the task; do not leave named input nodes as floating internal nodes. For MOS circuits, connect bulk to source unless the process or task explicitly requires otherwise, use threshold-aware biasing, and prefer modest documented transistor sizing unless the task strongly suggests otherwise. Avoid placeholders, hidden assumptions, and benchmark-specific shortcuts.
+
+=== CIRCUIT TASK ===
+Task: Design A simple NMOS constant current source with resistive load R
+Circuit Type: CurrentMirror
+Difficulty Level: Easy
+Input node(s): Vbias
+Output node(s): Vout
+
+=== DOMAIN CONSTRAINTS ===
+VDD=5V. For a simple NMOS constant current source, use one NMOS with drain=Vout, gate=Vbias, source=0, bulk=0, plus an explicit DC source Vbias Vbias 0 DC 1.0 and a load resistor from VDD to Vout.
+Only use a diode-connected reference branch/current mirror when the task explicitly asks for a current mirror, cascode mirror, or Iref input.
+MOSFET models: NMOS (Vth=0.5-0.7V, kp=100u, W=50u, L=1u).
+Required analyses: .op
+=== OUTPUT CONTRACT ===
+- final_filename: p8.cir
+- state objective, topology, required devices, biasing assumptions, analyses, and output constraints
+- all nodes listed in input (Vbias) and output (Vout) must appear in the final netlist

@@ -1,0 +1,77 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p24.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For integrator tasks, use a real active feedback capacitor around an op-amp-style gain stage rather than a passive RC approximation. Keep Vin, Vout, and any internal op-amp nodes explicit so transient-based verification can replace the input source cleanly.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+Single-supply inverting op-amp integrator. Preserve external node names `Vin` and `Vout`. Use `Vref` as the 2.5 V virtual ground. The op-amp non-inverting input connects to `Vref`; the inverting summing node can be `NINV`. `R1` connects `Vin` to `NINV`, and `Cf` connects from `Vout` back to `NINV`.
+
+**Device/Function List**
+- `VDD`: independent DC source from `VDD` to `0`, value `5V`.
+- `Vin` source: independent square/PULSE source from `Vin` to `Vref`, not ground, so `Vin` swings around the reference.
+- `Vref` divider: two equal resistors from `VDD` to `0`, midpoint node `Vref`; optional bypass capacitor from `Vref` to `0`.
+- `R1`: input resistor from `Vin` to `NINV`, suggested `10k`.
+- `Cf`: feedback capacitor from `Vout` to `NINV`, suggested `100n`.
+- Op-amp primitive model: high-gain voltage-controlled source or behavioral primitive using `Vref - V(NINV)` as differential input, with output at `Vout`; output should be limited to the 0 V to 5 V single-supply rails if the chosen primitive supports limiting.
+
+**Bias/Reference Strategy**
+Use `VDD = 5V` and `Vref = 2.5V`. Drive `Vin` as a square wave centered on `Vref`, for example absolute levels `2.0V` to `3.0V`, implemented as a source between `Vin` and `Vref` or otherwise ensuring `Vin` is not floating and is centered around `Vref`. The op-amp gain should keep `NINV` close to `Vref`.
+
+**Signal Or Feedback Path**
+Input current flows through `R1` from `Vin` into the summing node `NINV`. The capacitor `Cf` provides the only intended AC feedback path from `Vout` to `NINV`, forcing `Vout` to ramp in the opposite direction of the input deviation from `Vref`. When `Vin > Vref`, `Vout` ramps downward; when `Vin < Vref`, `Vout` ramps upward.
+
+**SPICE/Netlist Constraints**
+Include `.tran 1u 10m`. Probe or print `V(Vin)` and `V(Vout)`. The final file should be `p24.cir`. Node names `Vin` and `Vout` must appear exactly as the driven input and output nodes. No undefined op-amp subcircuit placeholders should be used; any op-amp model must be primitive or fully defined locally.
+
+**Failure Risks To Avoid**
+- Do not leave `Vin` floating; it must be explicitly driven.
+- Do not drive `Vin` only relative to ground unless the waveform is still centered at `2.5V`.
+- Do not rename `Vout` or hide it behind an internal alias.
+- Avoid an unbounded op-amp output if the simulator behavior would produce unrealistic rail excursions.
+- Avoid choosing `R1*Cf` or input amplitude so large/small that `Vout` saturates before a clear triangular waveform is visible over `10ms`.
+- Avoid omitting a DC bias path/reference for the op-amp inputs in the single-supply setup.
+
+=== NORMALIZED SPEC ===
+final_filename: p24.cir
+
+Objective: Create a single-supply inverting op-amp integrator using input node Vin and output node Vout. With Vin driven by a square wave and transient analysis `.tran 1u 10m`, Vout should produce an inverted integrated triangular waveform around a mid-supply reference.
+
+Topology: Use an inverting op-amp integrator. Connect resistor R1 from Vin to the op-amp inverting input. Connect capacitor Cf from Vout back to the inverting input. Bias the non-inverting input at a mid-supply reference node Vref = 2.5 V so the single-supply op-amp can integrate positive and negative deviations of Vin around Vref.
+
+Required devices:
+VDD supply: independent DC source from VDD to 0, value 5 V.
+Vin source: explicit independent PULSE or square-wave source connected from Vin to Vref, so Vin is electrically driven and swings around the virtual-ground reference.
+Vref generator: resistor divider from VDD to ground using two equal resistors, optionally bypassed with a capacitor to ground.
+R1: input resistor from Vin to the op-amp inverting input node, e.g. NINV.
+Cf: feedback capacitor from Vout to NINV.
+Op-amp: voltage-controlled voltage source or behavioral source modeling a high-gain op-amp powered conceptually from 0 to VDD. Non-inverting input connects to Vref, inverting input connects to NINV, output is Vout. Limit or clamp output behavior to stay within the 0 V to 5 V supply range if using a behavioral source.
+
+Biasing assumptions:
+Use VDD = 5 V.
+Use Vref = 2.5 V as the single-supply virtual ground.
+Vin should be a square wave centered on Vref, for example a PULSE from 2.0 V to 3.0 V or from Vref - 0.5 V to Vref + 0.5 V.
+The op-amp should have enough gain for NINV to remain close to Vref during operation.
+Choose R1 and Cf so the triangle slope is visible over 10 ms without saturating Vout. For example, R1 = 10 kOhm and Cf = 100 nF gives slope magnitude approximately `(Vin - Vref)/(R1*Cf)`.
+
+Analysis:
+Include `.tran 1u 10m`.
+Probe or print V(Vin) and V(Vout).
+Expected behavior: Vin is a square wave around 2.5 V. Vout ramps linearly downward when Vin is above Vref and ramps linearly upward when Vin is below Vref, forming an inverted triangular waveform centered near Vref, limited by the 0 V and 5 V supply rails.
+
+Output constraints:
+The final netlist must include node Vin exactly as the driven input node.
+The final netlist must include node Vout exactly as the integrator output node.
+Do not leave Vin floating.
+Do not replace Vout with an internal alias.
+No subcircuit placeholders should be used unless the op-amp model is fully defined in the same file.

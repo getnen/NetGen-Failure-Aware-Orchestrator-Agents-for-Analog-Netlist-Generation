@@ -1,0 +1,19 @@
+Reference Voltage (Vref): 2.50 V
+
+Observed Comparator Behavior:
+---------------------------
+Vin (V) | Vout (V)
+---------------------------
+2.45    | 0.00
+2.46    | 0.00
+2.47    | 0.00
+2.48    | 0.00
+2.49    | 0.00
+2.50    | 0.01
+2.51    | 4.74
+2.52    | 4.95
+2.53    | 4.95
+2.54    | 4.95
+2.55    | 4.95
+
+The op-amp comparator functions as expected based on observed behavior.

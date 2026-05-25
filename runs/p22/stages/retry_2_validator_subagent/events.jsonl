@@ -1,0 +1,4 @@
+{"type": "thread.started", "thread_id": "019def85-d98b-7700-82c7-d53169f4f4cc"}
+{"type": "turn.started"}
+{"type": "item.completed", "item": {"id": "item_0", "type": "agent_message", "text": "* 5V single-supply transistor RC phase-shift oscillator\nVDD VDD 0 DC 5\nVREF Vref 0 DC 2.5\n\nRBIAS1 VDD Vinp 330k\nRBIAS2 Vinp 0 100k\nCSTART Vinp 0 1p\n\nQ1 Vout Vinp emit NPN\nRC VDD Vout 4.7k\nRE emit 0 680\nCE emit 0 100u\n\nC1 Vout rc1 10n\nR1 rc1 Vref 6.8k\nC2 rc1 rc2 10n\nR2 rc2 Vref 6.8k\nC3 rc2 Vinn 10n\nR3 Vinn Vref 6.8k\nCIN Vinn Vinp 100n\nRIN Vinp Vref 1Meg\n\n.model NPN NPN IS=1e-15 BF=200 VAF=100 CJE=2p CJC=1p TF=0.3n\n\n.ic V(Vinp)=1.18 V(Vinn)=2.52 V(rc1)=2.48 V(rc2)=2.51 V(Vout)=2.7 V(emit)=0.52\n.tran 1u 20m uic\n.end"}}
+{"type": "turn.completed", "usage": {"input_tokens": 24082, "cached_input_tokens": 21376, "output_tokens": 805, "reasoning_output_tokens": 516}}

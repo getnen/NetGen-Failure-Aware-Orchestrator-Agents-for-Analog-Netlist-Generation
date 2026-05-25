@@ -1,0 +1,2 @@
+{"ts_utc": "13:59:56.672409+00:00", "type": "run.started", "payload": {"run_id": "p2_a00", "backend": "codex", "task_id": "2", "task_type": "Amplifier", "task_level": "Easy", "output_cir": "p2.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "14:00:46.033292+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 1}}

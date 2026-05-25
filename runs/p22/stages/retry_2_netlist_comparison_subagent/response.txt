@@ -1,0 +1,49 @@
+{
+  "status": "distinct_or_unproven",
+  "similarity": 0.8063,
+  "repeated_failure_signature": false,
+  "previous_failure_type": "functional_error",
+  "current_failure_type": "functional_error",
+  "recommendation": "continue_current_route",
+  "current_signature": {
+    "element_counts": {
+      "v": 2,
+      "r": 8,
+      "c": 6
+    },
+    "models": [
+      "npn"
+    ],
+    "nodes": [
+      "emit",
+      "rc1",
+      "rc2",
+      "vdd",
+      "vinn",
+      "vinp",
+      "vout",
+      "vref"
+    ],
+    "digest": "d78e2f4929c3e259"
+  },
+  "previous_signature": {
+    "element_counts": {
+      "v": 1,
+      "r": 8,
+      "c": 5
+    },
+    "models": [
+      "npn"
+    ],
+    "nodes": [
+      "emit",
+      "rc1",
+      "rc2",
+      "vdd",
+      "vinn",
+      "vinp",
+      "vout"
+    ],
+    "digest": "4f754b53b20eb5d2"
+  }
+}

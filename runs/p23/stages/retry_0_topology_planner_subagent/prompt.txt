@@ -1,0 +1,74 @@
+You are the topology planning subagent for a SPICE generation framework.
+Create a concise circuit topology plan before SPICE is written.
+Do not write a full netlist. Describe the devices, node roles, bias strategy, feedback paths, and expected analysis behavior.
+Preserve requested port names exactly and call out topology risks that the netlist writer must avoid.
+Stay within primitive-device SPICE planning assumptions; do not suggest behavioral or controlled-source shortcuts unless the task explicitly requires them.
+
+=== TASK ===
+Type: Oscillator
+Description: A Wien Bridge oscillator
+Inputs: -
+Outputs: Vout
+
+
+=== TASK-SPECIFIC PLANNING CONSTRAINTS ===
+- Use a real transistor-level analog gain stage, not a behavioral or controlled-source amplifier.
+- Do not propose B/E/F/G/H source elements, ideal limiter blocks, or conceptual op-amp macros as the main oscillator core.
+- Keep exact startup-capable internal nodes such as Vinp and Vinn explicit when the topology uses differential inputs.
+- Bias the active stage around a real mid-supply reference and ensure the loop has enough small-signal gain to overcome passive-network attenuation.
+- Avoid output clamp diodes or hard CMOS inverter-style rail switching on Vout unless the task explicitly asks for aggressive waveform shaping.
+- For Wien-bridge oscillators, keep a clean bridge around the amplifier input and use only gentle amplitude stabilization if any is needed.
+- Prefer a simple single-polarity differential pair with the opposite-polarity active load and a modest analog output stage over exotic complementary-input or multi-rail startup tricks.
+- Keep the bridge centered at mid-supply and target a closed-loop gain slightly above the Wien startup requirement rather than relying on hard clipping to force oscillation.
+- Prefer one compact analog gain core plus one simple Wien bridge over multi-stage driver chains, split feedback ladders, or extra output buffers that create multiple competing poles.
+- Keep the positive-gain path and stabilization network easy to inspect: avoid commented-out candidate devices, duplicated clamp branches, or partially disabled limiter ideas in the planned topology.
+- Use a straightforward gain-setting path such as one feedback resistor branch and one reference-to-ground branch around the amplifier rather than multiple stacked feedback branches unless the task explicitly requires amplitude-control circuitry.
+=== NORMALIZED SPEC ===
+final_filename: p23.cir
+
+Objective: Implement a 5 V single-supply Wien Bridge oscillator whose output node Vout develops a visible sustained sinusoidal oscillation during `.tran 1u 5m`. There are no external input nodes. The final netlist must include node Vout.
+
+Topology: Use an op-amp-like high-gain voltage-controlled gain stage powered from VDD=5 V and ground, configured as a non-inverting Wien Bridge oscillator around a mid-supply reference. Create a mid-supply node Vref at approximately 2.5 V with a resistor divider and bypass capacitor. The Wien positive-feedback network connects from Vout to the op-amp non-inverting input Vinp using a series RC branch, with a parallel RC branch from Vinp to Vref. This gives zero phase shift and 1/3 feedback gain at the oscillation frequency. The negative-feedback network connects from Vout to the op-amp inverting input Vinn and from Vinn to Vref, setting closed-loop gain slightly above 3 for startup.
+
+Required devices:
+- Independent DC supply source VDD from VDD to 0, value 5 V.
+- Mid-supply bias divider: two equal resistors from VDD to Vref and Vref to 0, plus a bypass capacitor from Vref to 0.
+- High-gain op-amp/gain-stage element powered or behaviorally limited to the 0 to 5 V rails. Its internal differential input nodes must be named Vinp and Vinn so startup asymmetry can be initialized or injected there.
+- Wien network:
+  - Rw1 and Cw1 in series from Vout to Vinp.
+  - Rw2 and Cw2 in parallel from Vinp to Vref.
+  - Choose Rw1=Rw2 and Cw1=Cw2 for a clean oscillation frequency, e.g. R=10 kOhm and C=10 nF, giving about 1.59 kHz.
+- Negative feedback:
+  - Rg from Vinn to Vref.
+  - Rf from Vout to Vinn.
+  - Set non-inverting gain slightly above 3, e.g. Rg=10 kOhm and Rf=22 kOhm to start oscillation. If amplitude stabilization is included, use diodes or a nonlinear limiter in the feedback/gain stage so Vout remains bounded inside the 0 to 5 V supply.
+- Optional small capacitor from Vout to ground or output resistance only if needed for numerical convergence, not large enough to suppress oscillation.
+
+Biasing assumptions:
+- Single-supply operation requires all AC signals to oscillate around Vref, not ground.
+- Vinp and Vinn should bias near Vref at the operating point.
+- Vout should bias near mid-supply and swing periodically without clipping flat at 0 V or 5 V for the whole latter half of the transient.
+- For any MOS implementation, NMOS bulks connect to their sources, PMOS bulks connect to their sources, and device sizing should be nominal unless extra gain is needed.
+
+Startup requirements:
+- Include an `.ic` or equivalent initialization that creates a small mismatch between Vinp and Vinn, for example Vinp slightly above Vref and/or Vinn slightly below Vref.
+- The oscillator must not rely on an external input source because the task has no input nodes.
+- The gain should be slightly above the Barkhausen threshold at startup so the Wien frequency component grows from the initial mismatch.
+
+Required analysis:
+- `.tran 1u 5m`
+
+Expected verification behavior:
+- Plot or measure V(Vout) during transient.
+- Vout should show a sustained periodic waveform in the latter portion of the 5 ms run.
+- The expected oscillation frequency is approximately `1/(2*pi*Rw*Cw)` if equal Wien components are used.
+- The waveform should be centered near 2.5 V with visible amplitude and should not decay to DC.
+
+
+=== OUTPUT CONTRACT ===
+- Topology summary
+- Device/function list
+- Bias/reference strategy
+- Signal or feedback path
+- SPICE/netlist constraints
+- Failure risks to avoid

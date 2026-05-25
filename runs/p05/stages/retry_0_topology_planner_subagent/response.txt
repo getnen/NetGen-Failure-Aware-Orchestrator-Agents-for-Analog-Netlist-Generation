@@ -1,0 +1,62 @@
+**Topology Summary**
+Single-ended NMOS cascode common-source amplifier. Use two stacked NMOS devices from `Vout` down to ground, with `Rload` pulling `Vout` up to `VDD = 5 V`. The lower device converts `Vin` voltage changes into drain current; the upper cascode device shields the lower drain and raises output resistance, producing voltage gain at `Vout`.
+
+**Device/Function List**
+- `M1`: lower NMOS common-source input transistor.
+  - Drain: internal cascode node, e.g. `Ncas`
+  - Gate: `Vin`
+  - Source: `0`
+  - Bulk: `0`
+  - Function: transconductance input device.
+
+- `M2`: upper NMOS cascode transistor.
+  - Drain: `Vout`
+  - Gate: `Vbias`
+  - Source: internal cascode node `Ncas`
+  - Bulk: `Ncas`
+  - Function: cascode device, increases output resistance and stabilizes M1 drain voltage.
+
+- `Rload`: resistor from `VDD` to `Vout`.
+  - Nominal value: `50k`
+  - Acceptable range: `10k` to `100k`
+  - Function: converts signal drain current into output voltage.
+
+- `VDD`: independent DC source from `VDD` to `0`, value `5 V`.
+
+- `Vin`: independent voltage source driving exact node `Vin`.
+  - DC bias nominally `1.2 V`
+  - AC magnitude `1`
+
+- `Vbias`: independent voltage source driving exact node `Vbias`.
+  - DC nominally `2.5 V`
+
+**Bias/Reference Strategy**
+Use the given NMOS model target: `Vth = 0.7 V`, `kp = 100u`, `W = 50u`, `L = 1u`.
+
+`Vin = 1.2 V` gives M1 about `0.5 V` overdrive, enough for moderate conduction. `Vbias = 2.5 V` biases M2 on and should place the internal cascode node near a voltage that keeps M1 in saturation while preserving output swing at `Vout`. The `.op` point should confirm both NMOS devices conduct and remain in saturation with reasonable headroom below `VDD`.
+
+**Signal Or Feedback Path**
+There is no intentional global feedback loop. The small-signal path is:
+
+`Vin` → M1 gate modulation → current through M1/M2 stack → voltage drop across `Rload` → inverted output at `Vout`.
+
+M2 provides local cascode action by holding the M1 drain/internal node relatively stiff, reducing Miller effect and increasing gain.
+
+**SPICE/Netlist Constraints**
+- Preserve exact external node names: `Vin`, `Vbias`, `Vout`.
+- `Vin` and `Vbias` must be driven by explicit independent voltage sources.
+- `Vout` must be the drain of `M2` and the lower terminal of `Rload`.
+- Use no subcircuits.
+- Include `.op`.
+- Include `.ac dec 20 1 1e9`.
+- `Vin` source should include `AC 1` for direct gain measurement from `Vin` to `Vout`.
+- Tie each NMOS bulk to its own source: M1 bulk to `0`, M2 bulk to internal cascode node.
+
+**Failure Risks To Avoid**
+- Do not leave `Vin` or `Vbias` floating or only referenced by comments/parameters.
+- Do not tie M2 bulk to ground if the requirement is bulk tied to source.
+- Do not place `Rload` from `Vout` to ground; it must connect from `VDD` to `Vout`.
+- Do not accidentally make `Vout` the internal cascode node; `Vout` is the M2 drain.
+- Avoid a bias point where `Rload` is too large or current too high, pulling `Vout` too low and forcing M2 out of saturation.
+- Avoid setting `Vbias` too low, which can turn off M2 or starve M1 drain voltage.
+- Avoid omitting `AC 1` on the `Vin` source, since gain analysis depends on it.

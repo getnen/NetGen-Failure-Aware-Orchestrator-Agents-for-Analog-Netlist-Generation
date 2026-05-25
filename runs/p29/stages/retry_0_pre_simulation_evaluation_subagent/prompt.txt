@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: VCO
+Task: a Wien-bridge voltage‑controlled oscillator (Op-Amp based, RC network, no diodes)

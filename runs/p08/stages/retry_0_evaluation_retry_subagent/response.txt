@@ -1,0 +1,21 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "retryable": false,
+  "summary": "Load: 100, Current: 0.0004396482863369666\nLoad: 300, Current: 0.0004389465331986416\nLoad: 500, Current: 0.00043824701672397914\nLoad: 750, Current: 0.00043737575018088274\nLoad: 1000, Current: 0.00043650794104512956\nThe circuit functions correctly as a current source within the given tolerance.\nWarning: can't find the initialization file spinit.\nUnsupported Ngspice version 45",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Load: 100, Current: 0.0004396482863369666\nLoad: 300, Current: 0.0004389465331986416\nLoad: 500, Current: 0.00043824701672397914\nLoad: 750, Current: 0.00043737575018088274\nLoad: 1000, Current: 0.00043650794104512956\nThe circuit functions correctly as a current source within the given tolerance.\nWarning: can't find the initialization file spinit.\nUnsupported Ngspice version 45",
+    "artifacts": {
+      "wrapper_script": "<REDACTED>",
+      "op_file": "<REDACTED>",
+      "checker_script": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

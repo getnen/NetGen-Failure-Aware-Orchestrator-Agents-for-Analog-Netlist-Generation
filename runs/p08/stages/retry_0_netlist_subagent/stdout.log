@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019de916-3520-7732-94d6-3a288fc35ea4"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* Simple NMOS current sink with resistive load\nVDD VDD 0 DC 5\nVbias Vbias 0 DC 1.0\nRload VDD Vout 10k\nM1 Vout Vbias 0 0 NMOS W=50u L=1u\n.model NMOS NMOS (VTO=0.6 KP=100u LAMBDA=0.02)\n.op\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":24196,"cached_input_tokens":21376,"output_tokens":95,"reasoning_output_tokens":0}}

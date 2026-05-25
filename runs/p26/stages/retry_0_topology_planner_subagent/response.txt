@@ -1,0 +1,63 @@
+**Topology Summary**
+
+Use a classic inverting summing amplifier. `Vin1` and `Vin2` each feed a shared inverting summing node through equal resistors. The opamp non-inverting input is tied to ground. A feedback resistor connects `Vout` back to the summing node, forcing the summing node near virtual ground and producing:
+
+`Vout = -Rf/R1 * Vin1 - Rf/R2 * Vin2`
+
+With `R1 = R2 = Rf`, the expected result is:
+
+`Vout = -(Vin1 + Vin2)`
+
+For `Vin1 = 1 V` and `Vin2 = 1 V`, expect `Vout ≈ -2 V`.
+
+**Device/Function List**
+
+- `V1`: independent DC source driving node `Vin1` to `1 V`.
+- `V2`: independent DC source driving node `Vin2` to `1 V`.
+- `R1`: input resistor from `Vin1` to the inverting summing node.
+- `R2`: input resistor from `Vin2` to the same summing node.
+- `Rf`: feedback resistor from `Vout` to the summing node.
+- Explicit primitive opamp model: high-gain dependent voltage source, preferably VCVS-style.
+- Positive supply source: create `+5 V` rail.
+- Negative supply source: create `-5 V` rail so `Vout = -2 V` is reachable.
+- Ground reference node: SPICE node `0`.
+
+**Bias/Reference Strategy**
+
+Tie the opamp non-inverting input directly to ground. The inverting node should settle close to `0 V` through negative feedback. Use equal resistors, nominally:
+
+- `R1 = 10k`
+- `R2 = 10k`
+- `Rf = 10k`
+
+Use high open-loop gain, for example `1e6`, in the primitive opamp model. Split supplies are required because the desired output is negative.
+
+**Signal Or Feedback Path**
+
+`Vin1 -> R1 -> summing node -> opamp -> Vout`
+
+`Vin2 -> R2 -> summing node -> opamp -> Vout`
+
+`Vout -> Rf -> summing node`
+
+Negative feedback through `Rf` drives the summing node near ground and makes the output the inverted sum of the two input voltages.
+
+**SPICE/Netlist Constraints**
+
+- Preserve node names exactly: `Vin1`, `Vin2`, `Vout`.
+- `Vin1` must be driven by an explicit independent DC voltage source.
+- `Vin2` must be driven by an explicit independent DC voltage source.
+- `Vout` must be the opamp output node.
+- Include `.op` analysis.
+- Do not use subcircuits or placeholders.
+- Use primitive SPICE elements only.
+- If using a VCVS opamp model, ensure its polarity makes negative feedback valid: output should rise when non-inverting input exceeds inverting input.
+
+**Failure Risks To Avoid**
+
+- Do not power the opamp from only `0 V` and `+5 V`; `Vout = -2 V` would saturate or be impossible.
+- Do not leave `Vin1`, `Vin2`, or the summing node floating.
+- Do not connect feedback to the non-inverting input.
+- Do not reverse the dependent-source input polarity, or the loop becomes positive feedback.
+- Do not choose unequal resistor values unless intentionally changing the input gains.
+- Do not use behavioral shortcuts or ideal algebraic output expressions instead of a primitive dependent-source opamp model.

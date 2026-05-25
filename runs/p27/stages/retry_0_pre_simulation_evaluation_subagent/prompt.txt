@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Subtractor
+Task: An Op-amp subtractor to make Vout=Vin2-Vin1

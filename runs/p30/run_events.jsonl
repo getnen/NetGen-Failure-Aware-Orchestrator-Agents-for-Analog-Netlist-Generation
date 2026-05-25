@@ -1,0 +1,2 @@
+{"ts_utc": "16:27:18.072305+00:00", "type": "run.started", "payload": {"run_id": "p30_a02", "backend": "codex", "task_id": "30", "task_type": "PLL", "task_level": "Hard", "output_cir": "p30.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "16:30:47.820893+00:00", "type": "run.completed", "payload": {"status": "success_with_warnings", "output_cir": "<REDACTED>", "final_issues": ["pll_detector_or_reset_fabric_too_helper_node_heavy"], "retries_used": 1}}

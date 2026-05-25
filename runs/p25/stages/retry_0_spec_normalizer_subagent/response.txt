@@ -1,0 +1,43 @@
+final_filename: p25.cir
+
+Objective:
+Design a single-supply inverting op amp differentiator using input node Vin and output node Vout. Vin must be driven by an explicit triangle-wave independent voltage source. The transient output at Vout should approximate the differentiated form of the triangle input: a square-like waveform with polarity inversion.
+
+Topology:
+Use an inverting op amp differentiator:
+- Capacitor C1 connects from Vin to the op amp inverting input node.
+- Resistor Rf connects from Vout back to the op amp inverting input node.
+- The op amp non-inverting input is biased at a mid-supply reference Vref = 2.5 V so the differentiator can operate from a single 5 V supply.
+- The inverting input acts as a virtual Vref node during linear operation.
+- The output Vout should swing around Vref, positive when Vin has negative slope and negative when Vin has positive slope, limited by the 0 V to 5 V supply rails.
+
+Required devices:
+- VDD independent DC source from VDD to 0, value 5 V.
+- Vin independent triangle-wave voltage source connected from Vin to 0.
+- Vref generation, preferably a resistor divider from VDD to 0 with equal resistors, producing 2.5 V at node Vref.
+- Op amp macromodel or behavioral voltage-controlled source powered from VDD and 0, with high open-loop gain and output limiting between 0 V and 5 V.
+- C1 from Vin to the inverting input node, for example node NINV.
+- Rf from Vout to NINV.
+- Optional large resistor from NINV to Vref only if needed for DC convergence, but it must be much larger than Rf so it does not dominate differentiator behavior.
+
+Biasing assumptions:
+- Use VDD = 5 V.
+- Use Vref = 2.5 V as the single-supply signal reference.
+- Vin triangle wave should be centered around Vref, not ground, so the op amp input common-mode range is reasonable.
+- Choose triangle amplitude small enough that differentiated output does not hard-saturate unless clipping is intentionally visible.
+- Nominal example values: C1 = 10 nF, Rf = 10 kOhm. The ideal differentiated output follows:
+  Vout ≈ Vref - Rf*C1*dVin/dt
+- If using a behavioral op amp, limit Vout between 0 V and 5 V.
+
+Analysis:
+Include:
+.tran 1u 10m
+
+Output constraints:
+- Nodes Vin and Vout must both appear explicitly in the final netlist.
+- Vin must be driven by a triangle-wave independent voltage source.
+- Vout must be the op amp output node.
+- The transient waveform at Vin should be triangular.
+- The transient waveform at Vout should be square-like, centered around Vref, with inverted differentiator polarity:
+  rising Vin ramp produces lower Vout level;
+  falling Vin ramp produces higher Vout level.

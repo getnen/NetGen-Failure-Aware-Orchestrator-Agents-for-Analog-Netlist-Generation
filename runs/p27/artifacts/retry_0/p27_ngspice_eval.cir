@@ -1,0 +1,29 @@
+* single-supply unity-gain differential subtractor Vout = Vin2 - Vin1
+VDD VDD 0 DC 5
+V1 Vin1 0 DC 1
+V2 Vin2 0 DC 3
+
+R1 Vin1 Ninv 10k
+R2 Vout Ninv 10k
+R3 Vin2 Nnon 10k
+R4 Nnon 0 10k
+
+I1 Ntail 0 DC 200u
+M1 Nd1 Nnon Ntail 0 NMOSL1 W=200u L=1u
+M2 Vout Ninv Ntail 0 NMOSL1 W=200u L=1u
+M3 Nd1 Nd1 VDD VDD PMOSL1 W=400u L=1u
+M4 Vout Nd1 VDD VDD PMOSL1 W=400u L=1u
+
+.model NMOSL1 NMOS LEVEL=1 VTO=0.7 KP=200u LAMBDA=0.02
+.model PMOSL1 PMOS LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02
+
+.op
+
+.control
+set filetype=ascii
+set wr_singlescale
+op
+wrdata <REDACTED> v(Vout)
+quit
+.endc
+.end

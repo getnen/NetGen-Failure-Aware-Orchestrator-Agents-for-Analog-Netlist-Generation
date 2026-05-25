@@ -1,0 +1,29 @@
+You are the validator/fixer subagent.
+Repair syntax issues in this SPICE netlist if needed.
+Return ONLY corrected netlist text.
+Keep behavior equivalent when possible.
+Ensure there is one .end at the end.
+
+=== NETLIST TO VALIDATE ===
+* 5 V four-transistor NMOS cascode current mirror
+VDD VDD 0 DC 5
+IREFSRC VDD Iref DC 100uA
+R VDD Iout 10k
+M1 nref_mid nref_mid 0 0 NMOS W=50u L=1u
+M2 Iref Iref nref_mid nref_mid NMOS W=50u L=1u
+M3 nout_mid nref_mid 0 0 NMOS W=50u L=1u
+M4 Iout Iref nout_mid nout_mid NMOS W=50u L=1u
+.model NMOS NMOS (LEVEL=1 VTO=0.6 KP=100u)
+.op
+.end
+
+
+=== REPAIR GUIDANCE ===
+The previous attempt was evaluated functionally, not just syntactically. Repair the circuit so the measured behavior matches the task intent. If the evaluator reports topology-level failure, change the topology rather than only tweaking values. If a required input node appears only as an internal node, add the missing independent source. If the evaluator reports the same failure repeatedly, avoid regenerating the identical circuit.
+
+=== TOPOLOGY ISSUES DETECTED BEFORE SIMULATION ===
+- missing_current_mirror_output_branch
+Repair the topology before returning the netlist.
+
+=== REPAIR FOCUS ===
+General topology repair focus: preserve requested nodes and bias sources, remove floating or over-constrained high-impedance nodes, and make the generated topology clearly realize the intended transfer function before tuning values. Expose the mirrored output branch at the requested output node with a real load or current path.

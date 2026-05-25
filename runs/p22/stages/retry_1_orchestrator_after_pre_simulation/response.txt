@@ -1,0 +1,6 @@
+{
+  "next_agent": "evaluation_retry_subagent",
+  "reason": "The netlist passed static syntax and topology checks, so it is ready for simulation/evaluation.",
+  "retry_index": 1,
+  "context": {}
+}

@@ -1,0 +1,19 @@
+final_filename: p6.cir
+
+Objective: Create a SPICE netlist for a resistive-load NMOS inverter using input node Vin and output node Vout. The inverter should operate from VDD = 5 V and demonstrate the expected DC transfer behavior: Vout high when Vin is low, and Vout pulled low when Vin exceeds the NMOS threshold.
+
+Topology: Use a single NMOS transistor as the pull-down device and a resistor R as the pull-up load. Connect resistor R from VDD to Vout. Connect the NMOS drain to Vout, gate to Vin, source to ground, and bulk to source/ground. This is not a CMOS inverter; do not add a PMOS device.
+
+Required devices:
+VDD independent DC voltage source from node VDD to 0 with value 5 V.
+Vin independent DC voltage source from node Vin to 0 swept by the required DC analysis.
+R pull-up resistor from VDD to Vout. Use a nominal value such as 10k ohm unless downstream sizing chooses otherwise.
+M1 NMOS transistor with drain Vout, gate Vin, source 0, bulk 0.
+NMOS model with threshold voltage Vth = 0.7 V.
+
+Biasing assumptions: Ground node is 0. VDD is fixed at 5 V. Vin is explicitly driven by an independent voltage source so the input node is not floating. The NMOS bulk is tied to its source at ground. Nominal MOS sizing is acceptable for this easy inverter, for example W=10u and L=1u, unless the final framework uses default dimensions.
+
+Analyses: Include the required DC sweep:
+.dc Vin 0 5 0.1
+
+Output constraints: The final netlist must be saved as p6.cir. The exact node names Vin and Vout must appear in the netlist. The circuit must include explicit independent sources for VDD and Vin, the resistor load R to VDD, the NMOS pull-down transistor, and a valid NMOS model using VTO=0.7 or equivalent SPICE threshold syntax.

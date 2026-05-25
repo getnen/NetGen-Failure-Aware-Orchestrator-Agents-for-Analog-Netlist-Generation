@@ -1,0 +1,9 @@
+{
+  "status": "needs_repair",
+  "syntax_issues": [],
+  "topology_issues": [
+    "pll_detector_or_reset_fabric_too_helper_node_heavy"
+  ],
+  "repair_focus": "General PLL repair focus: preserve a real closed loop from reference clock to phase/frequency comparison, from comparison outputs through a stored or filtered control node, and from that control node into a controllable oscillator path that drives the final output clock. Keep the requested reference and output clock nodes explicit, ensure the control node has real storage and a defined passive path, and avoid topologies that only free-run, expose the output through an independent source, or fail to feed the generated clock back into the comparison stage. Every helper node introduced for edge generation, comparison, buffering, or charge-pump control must be produced by an active stage if it is referenced later; do not leave placeholder branches commented out. Keep the detector and reset fabric compact enough to be numerically robust; avoid sprawling helper-node forests and do not use giant leak resistors as the primary way to keep logic-state nodes alive. Also avoid current-starved VCO stages that still retain a strong uncontrolled inverter path in parallel with the controlled delay path, or whose main delay devices overwhelm the control-governed path so much that small retuning flips the loop from stalled to runaway. Keep the loop quantitatively plausible as well: avoid combinations where the control path is so light that the oscillator runs away far above the reference, or so heavy and weakly biased that the oscillator cannot capture or even sustain switching near the target range.",
+  "recommended_next_agent": "spec_normalizer_subagent"
+}

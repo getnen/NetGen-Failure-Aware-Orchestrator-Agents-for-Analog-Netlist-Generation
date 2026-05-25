@@ -1,0 +1,9 @@
+{
+  "next_agent": "spec_normalizer_subagent",
+  "reason": "Repeated similar netlist and failure signature detected; force a topology-level redesign.",
+  "retry_index": 2,
+  "context": {
+    "failure_type": "functional_error",
+    "forced_redesign": true
+  }
+}

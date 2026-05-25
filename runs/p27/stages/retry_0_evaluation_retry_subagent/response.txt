@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "route_to": "",
+  "failure_type": "",
+  "retryable": false,
+  "summary": "Vin1=1.0, Vin2=3.0, Vout=1.9728857, expected~2.0",
+  "evaluation": {
+    "status": "success",
+    "failure_type": "",
+    "message": "Vin1=1.0, Vin2=3.0, Vout=1.9728857, expected~2.0",
+    "artifacts": {
+      "ngspice_wrapper": "<REDACTED>",
+      "ngspice_data": "<REDACTED>",
+      "stdout_file": "<REDACTED>",
+      "stderr_file": "<REDACTED>",
+      "netlist_file": "<REDACTED>"
+    },
+    "return_code": 0
+  }
+}

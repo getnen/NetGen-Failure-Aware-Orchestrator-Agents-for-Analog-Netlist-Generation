@@ -1,0 +1,4 @@
+{"type": "thread.started", "thread_id": "019def9b-52f1-7ed3-bf00-7aacd717faf4"}
+{"type": "turn.started"}
+{"type": "item.completed", "item": {"id": "item_0", "type": "agent_message", "text": "* Single-supply inverting op-amp integrator\nVDD VDD 0 DC 5\nVIN Vin Vref PULSE(-0.25 0.25 0 1u 1u 1m 2m)\n\nRREF1 VDD Vref 10k\nRREF2 Vref 0 10k\nCREF Vref 0 10u\n\nR1 Vin NINV 10k\nCF Vout NINV 100n\nRFLEAK Vout NINV 10Meg\n\nITAIL NTAIL 0 DC 200u\nMNPLUS N1 Vref NTAIL 0 NMOS_L1\nMNMINUS Vout NINV NTAIL 0 NMOS_L1\nMPLOAD1 N1 N1 VDD VDD PMOS_L1\nMPLOAD2 Vout N1 VDD VDD PMOS_L1\nCLOAD Vout 0 10p\n\n.model NMOS_L1 NMOS (LEVEL=1 VTO=0.7 KP=500u LAMBDA=0.02)\n.model PMOS_L1 PMOS (LEVEL=1 VTO=-0.7 KP=250u LAMBDA=0.02)\n\n.ic V(Vout)=2.5 V(NINV)=2.5\n.tran 1u 10m\n.print tran V(Vin) V(Vout)\n.end"}}
+{"type": "turn.completed", "usage": {"input_tokens": 24747, "cached_input_tokens": 21376, "output_tokens": 812, "reasoning_output_tokens": 516}}

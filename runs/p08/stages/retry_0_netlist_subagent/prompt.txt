@@ -1,0 +1,67 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p8.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+Use one NMOS as a low-side constant current sink with a resistive pull-up load. `Vout` is the shared drain/load node. The resistor connects from `VDD` to `Vout`; the NMOS connects from `Vout` to ground. The gate is driven directly by `Vbias`.
+
+**Device/Function List**
+- `VDD`: DC supply source from `VDD` to `0`, value `5 V`.
+- `Vbias`: DC bias source named explicitly as `Vbias`, connected `Vbias 0`, value `DC 1.0`.
+- `R`: load resistor from `VDD` to `Vout`, nominal `10k`.
+- NMOS transistor: drain=`Vout`, gate=`Vbias`, source=`0`, bulk=`0`.
+- `.model NMOS NMOS`: threshold around `0.5-0.7 V`, `kp=100u`.
+- NMOS sizing: nominal `W=50u`, `L=1u`.
+
+**Bias/Reference Strategy**
+`VDD=5 V` establishes the pull-up rail. `Vbias=1.0 V` gives the NMOS `Vgs=1.0 V`, above threshold, so the transistor sinks current from `Vout` through its channel to ground. The resistor converts that sink current into a DC output voltage at `Vout`.
+
+**Signal or Feedback Path**
+There is no active feedback or mirror reference branch. The DC path is:
+`VDD -> R -> Vout -> NMOS drain/source -> 0`.
+
+`Vbias` only controls the NMOS gate and should not be loaded except by the MOS gate.
+
+**SPICE/Netlist Constraints**
+- Preserve node names exactly: `Vbias`, `Vout`.
+- `Vout` must be the NMOS drain and the lower terminal of the resistor.
+- `Vbias` must be electrically driven by an explicit independent DC source.
+- Include `.op` analysis.
+- Include an `NMOS` model named exactly `NMOS`.
+- Do not write a diode-connected NMOS, reference leg, or full current mirror.
+
+**Failure Risks To Avoid**
+- Do not leave `Vbias` floating or rename it to something like `VB`.
+- Do not connect the load resistor to ground; it must connect from `VDD` to `Vout`.
+- Do not swap NMOS drain/source in a way that makes `Vout` the source.
+- Do not omit the bulk connection to ground.
+- Avoid choosing `Vbias` below threshold, which would turn the sink mostly off.
+- Ensure resistor/device sizing does not force `Vout` near ground so hard that the NMOS leaves saturation unexpectedly.
+
+=== NORMALIZED SPEC ===
+final_filename: p8.cir
+
+Objective: Create a simple NMOS constant current source with a resistive load, using input node `Vbias` to set the NMOS gate voltage and output node `Vout` at the NMOS drain.
+
+Topology: Use a single NMOS transistor as a low-side current sink. Connect the load resistor from `VDD` to `Vout`. Connect the NMOS drain to `Vout`, gate to `Vbias`, source to ground, and bulk to ground.
+
+Required devices:
+VDD supply: independent DC voltage source from `VDD` to `0`, value 5 V.
+Vbias source: independent DC voltage source `Vbias Vbias 0 DC 1.0`.
+Load resistor `R` from `VDD` to `Vout`; choose a nominal value such as 10 kOhm unless otherwise constrained.
+NMOS transistor with drain=`Vout`, gate=`Vbias`, source=`0`, bulk=`0`.
+NMOS model named `NMOS` with threshold in the 0.5-0.7 V range, `kp=100u`, nominal sizing `W=50u`, `L=1u`.
+
+Biasing assumptions: `VDD=5V`. `Vbias=1.0V`, giving `Vgs=1.0V`, above the NMOS threshold. Current is set by the NMOS gate bias and device parameters, while the resistor provides the drain load from the positive supply.
+
+Analyses: Include `.op` operating point analysis to verify DC node voltages and drain current.
+
+Output constraints: The final netlist must include nodes `Vbias` and `Vout` exactly. `Vbias` must be electrically driven by the explicit DC source. `Vout` must be the drain/load node. No diode-connected reference branch or current mirror reference branch should be added for this task.

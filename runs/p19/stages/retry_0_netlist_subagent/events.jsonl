@@ -1,0 +1,4 @@
+{"type": "thread.started", "thread_id": "019dee21-7c95-7021-a731-10c78b04b3f8"}
+{"type": "turn.started"}
+{"type": "item.completed", "item": {"id": "item_0", "type": "agent_message", "text": "* NMOS Gilbert Cell Mixer\nVDD VDD 0 DC 5\nVbias_tail Vbias_tail 0 DC 1.05\nVrfp Vrfp 0 SIN(2.0 0.02 1k)\nVrfn Vrfn 0 SIN(2.0 -0.02 1k)\nVlop Vlop 0 SIN(3.6 0.5 1.2k)\nVlon Vlon 0 SIN(3.6 -0.5 1.2k)\n\nRloadp VDD Voutp 10k\nRloadn VDD Voutn 10k\n\nMtail rf_tail Vbias_tail 0 0 NMOS W=50u L=1u\nMrfp rf_drp Vrfp rf_tail rf_tail NMOS W=50u L=1u\nMrfn rf_drn Vrfn rf_tail rf_tail NMOS W=50u L=1u\nMlo1 Voutp Vlop rf_drp rf_drp NMOS W=50u L=1u\nMlo2 Voutn Vlon rf_drp rf_drp NMOS W=50u L=1u\nMlo3 Voutn Vlop rf_drn rf_drn NMOS W=50u L=1u\nMlo4 Voutp Vlon rf_drn rf_drn NMOS W=50u L=1u\n\n.model NMOS NMOS (VTO=0.7 KP=100u)\n\n.tran 1u 5m\n.end"}}
+{"type": "turn.completed", "usage": {"input_tokens": 25691, "cached_input_tokens": 21376, "output_tokens": 854, "reasoning_output_tokens": 516}}

@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: CurrentMirror
+Task: A simple NMOS constant current source with resistive load R

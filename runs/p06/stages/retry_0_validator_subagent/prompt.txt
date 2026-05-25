@@ -1,0 +1,26 @@
+You are the validator/fixer subagent.
+Repair syntax issues in this SPICE netlist if needed.
+Return ONLY corrected netlist text.
+Keep behavior equivalent when possible.
+Ensure there is one .end at the end.
+
+=== NETLIST TO VALIDATE ===
+* Resistive-load NMOS inverter
+VDD VDD 0 DC 5
+Vin Vin 0 DC 0
+R VDD Vout 10k
+M1 Vout Vin 0 0 NMOS W=10u L=1u
+.model NMOS NMOS (LEVEL=1 VTO=0.7 KP=200u LAMBDA=0.02)
+.dc Vin 0 5 0.1
+.end
+
+
+=== REPAIR GUIDANCE ===
+The previous attempt was evaluated functionally, not just syntactically. Repair the circuit so the measured behavior matches the task intent. If the evaluator reports topology-level failure, change the topology rather than only tweaking values. If a required input node appears only as an internal node, add the missing independent source. If the evaluator reports the same failure repeatedly, avoid regenerating the identical circuit.
+
+=== TOPOLOGY ISSUES DETECTED BEFORE SIMULATION ===
+- missing_cmos_pullup_or_pulldown_path
+Repair the topology before returning the netlist.
+
+=== REPAIR FOCUS ===
+General topology repair focus: preserve requested nodes and bias sources, remove floating or over-constrained high-impedance nodes, and make the generated topology clearly realize the intended transfer function before tuning values. Use a real complementary pull-up/pull-down path tied to VDD and ground rather than a passive divider or ideal behavioral shortcut.

@@ -1,0 +1,9 @@
+{
+  "status": "needs_repair",
+  "syntax_issues": [],
+  "topology_issues": [
+    "missing_current_mirror_output_branch"
+  ],
+  "repair_focus": "General topology repair focus: preserve requested nodes and bias sources, remove floating or over-constrained high-impedance nodes, and make the generated topology clearly realize the intended transfer function before tuning values. Expose the mirrored output branch at the requested output node with a real load or current path.",
+  "recommended_next_agent": "validator_subagent"
+}

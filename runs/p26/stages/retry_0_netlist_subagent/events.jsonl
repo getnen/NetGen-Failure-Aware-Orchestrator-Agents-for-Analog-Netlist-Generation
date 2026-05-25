@@ -1,0 +1,4 @@
+{"type": "thread.started", "thread_id": "019defb8-f02f-7362-8aa2-66156100cfef"}
+{"type": "turn.started"}
+{"type": "item.completed", "item": {"id": "item_0", "type": "agent_message", "text": "* Inverting summing amplifier using primitive MOS opamp\nVDD Vdd 0 DC 5\nVSS Vss 0 DC -5\nV1 Vin1 0 DC 1\nV2 Vin2 0 DC 1\nR1 Vin1 Vsum 10k\nR2 Vin2 Vsum 10k\nRf Vout Vsum 10k\nItail Ntail Vss DC 100u\nM1 Nd1 0 Ntail Vss NMOS L=1u W=100u\nM2 Nout1 Vsum Ntail Vss NMOS L=1u W=100u\nM3 Nd1 Nd1 Vdd Vdd PMOS L=1u W=200u\nM4 Nout1 Nd1 Vdd Vdd PMOS L=1u W=200u\nM5 Vout Nout1 Vdd Vdd PMOS L=1u W=500u\nM6 Vout Nout1 Vss Vss NMOS L=1u W=250u\nRload Vout 0 1Meg\nCcomp Nout1 Vout 2p\n.model NMOS NMOS LEVEL=1 VTO=0.7 KP=200u LAMBDA=0.02\n.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02\n.op\n.end"}}
+{"type": "turn.completed", "usage": {"input_tokens": 24622, "cached_input_tokens": 21376, "output_tokens": 820, "reasoning_output_tokens": 516}}

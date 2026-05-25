@@ -1,0 +1,2 @@
+{"ts_utc": "21:17:19.977823+00:00", "type": "run.started", "payload": {"run_id": "p25_a00", "backend": "codex", "task_id": "25", "task_type": "Differentiator", "task_level": "Hard", "output_cir": "p25.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "21:18:17.079180+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 1}}

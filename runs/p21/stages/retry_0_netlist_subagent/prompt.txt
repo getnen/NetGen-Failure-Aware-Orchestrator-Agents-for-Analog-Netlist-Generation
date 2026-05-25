@@ -1,0 +1,127 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p21.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For Opamp tasks, preserve all requested bias input nodes exactly as independent DC sources, keep every MOSFET biased in conduction, and avoid floating high-impedance outputs by adding only minimal leak paths if needed for convergence. A passing topology needs differential gain larger than common-mode gain under the checker's 100 Hz small-signal test, not merely a valid .op point. Prefer plain `DC ... AC magnitude` input-source syntax without extra AC phase terms unless phase is truly required, because evaluators may perturb one source to create differential excitation. For stacked op-amps, keep a sensible bias ladder: tail bias lowest, lower NMOS cascode bias above it, and upper PMOS bias above the PMOS load/cascode bias.
+
+=== TOPOLOGY PLAN ===
+**Topology Summary**
+
+Use a fully differential single-stage NMOS-input telescopic cascode opamp powered from `VDD = 5 V`. The two outputs are high-impedance internal gain nodes: `Voutp` and `Vout`. The structure is symmetric: each side has an NMOS input device, an NMOS cascode above it, a PMOS cascode load, and a PMOS current-source load to `VDD`. A single NMOS tail current source biases both input branches.
+
+**Device/Function List**
+
+- `M5`: NMOS tail current source. Drain at tail node, source/bulk at `0`, gate at `Vbias1`.
+- `M1`: NMOS input transistor for `Vinp`. Source at tail node, drain at `nleft`, gate at `Vinp`, bulk tied to source.
+- `M2`: NMOS input transistor for `Vinn`. Source at tail node, drain at `nright`, gate at `Vinn`, bulk tied to source.
+- `M6`: NMOS cascode above `M1`. Source at `nleft`, drain at `Voutp`, gate at `Vbias2`, bulk tied to source.
+- `M7`: NMOS cascode above `M2`. Source at `nright`, drain at `Vout`, gate at `Vbias2`, bulk tied to source.
+- `M3`: PMOS upper current-source load on `Voutp` side. Source/bulk at `VDD`, drain at `pleft`, gate at `Vbias4`.
+- `M4`: PMOS upper current-source load on `Vout` side. Source/bulk at `VDD`, drain at `pright`, gate at `Vbias4`.
+- `M8`: PMOS cascode load on `Voutp` side. Source/bulk at `pleft`, drain at `Voutp`, gate at `Vbias3`.
+- `M9`: PMOS cascode load on `Vout` side. Source/bulk at `pright`, drain at `Vout`, gate at `Vbias3`.
+
+**Bias/Reference Strategy**
+
+Use explicit independent DC voltage sources for all named input and bias nodes:
+
+- `Vinp = 2.5 V`
+- `Vinn = 2.5 V`
+- `Vbias1 = 1.2 V`
+- `Vbias2 = 3.0 V`
+- `Vbias3 = 2.0 V`
+- `Vbias4 = 4.0 V`
+- `VDD = 5 V`
+
+These biases are intended to turn on all stacked devices at `.op`, keep the NMOS input pair and cascodes in saturation, and leave enough output headroom for the PMOS cascode loads. Use the requested nominal MOS models: NMOS `VTO=0.7`, `KP=100u`, `W=50u`, `L=1u`; PMOS `VTO=-0.7`, `KP=50u`, `W=100u`, `L=1u`.
+
+**Signal Or Feedback Path**
+
+There is no explicit feedback network. This is an open-loop telescopic gain stage.
+
+- Differential input: `Vinp - Vinn`
+- Positive-side output node: `Voutp`
+- Negative-side output node: `Vout`
+
+For balanced DC input, both branches should conduct similar current and `Voutp`/`Vout` should settle close to each other. A small increase at `Vinp` increases current in the `Voutp` branch, tending to pull `Voutp` downward relative to `Vout`.
+
+**SPICE/Netlist Constraints**
+
+- Final filename must be `p21.cir`.
+- Preserve exact node names: `Vinp`, `Vinn`, `Vbias1`, `Vbias2`, `Vbias3`, `Vbias4`, `Voutp`, `Vout`.
+- Include `.op`.
+- Do not use subcircuits.
+- Do not hide required ports behind renamed aliases.
+- Every named input/bias node must be driven by an explicit independent voltage source.
+- `Voutp` and `Vout` must remain high-impedance gain nodes between NMOS cascodes and PMOS cascodes.
+- Bulk terminals should be tied to each MOSFET source per task guidance.
+
+**Failure Risks To Avoid**
+
+- Do not short `Voutp` and `Vout`; they must be separate differential outputs.
+- Do not connect PMOS cascode drains/sources backward; upper PMOS sources go toward `VDD`, cascode drains go to outputs.
+- Do not omit DC sources for `Vbias1` through `Vbias4`, `Vinp`, or `Vinn`.
+- Do not tie outputs directly to voltage sources or resistive loads that destroy high output impedance.
+- Avoid bias choices that cut off any cascode or current-source device at `.op`.
+- Avoid using only two NMOS and two PMOS devices; the required topology needs nine MOSFETs total: four NMOS signal/cascode devices, four PMOS load/cascode devices, and one NMOS tail source.
+
+=== NORMALIZED SPEC ===
+final_filename: p21.cir
+
+Objective: Create a SPICE netlist for a single-stage telescopic cascode opamp using VDD = 5 V. The circuit must expose input nodes Vinp, Vinn, Vbias1, Vbias2, Vbias3, Vbias4 and output nodes Voutp, Vout. The required verification is a DC operating point analysis with `.op`.
+
+Topology: Use a fully differential NMOS-input telescopic cascode structure with one NMOS tail current source, two NMOS input devices, two NMOS cascode devices above the input pair, two PMOS current-source load devices, and two PMOS cascode load devices. This satisfies the “4 NMOS as cascode input pair, 4 PMOS as cascode loads, and 1 tail current” intent while preserving two high-impedance output nodes.
+
+Required devices:
+- M1: NMOS input transistor for Vinp branch.
+- M2: NMOS input transistor for Vinn branch.
+- M5: NMOS tail current source.
+- M6, M7: NMOS cascode devices above M1/M2.
+- M3, M4: PMOS upper current-source load devices.
+- M8, M9: PMOS cascode load devices below M3/M4.
+- VDD source from VDD to 0 at 5 V.
+- Independent DC sources for every named input node: Vinp, Vinn, Vbias1, Vbias2, Vbias3, Vbias4.
+
+Key interconnectivity:
+- M5 drain connects to tail node, source and bulk to 0, gate to Vbias1.
+- M1 source connects to tail node, drain connects to internal node nleft, gate to Vinp, bulk to tail node.
+- M2 source connects to tail node, drain connects to internal node nright, gate to Vinn, bulk to tail node.
+- M6 source connects to nleft, drain connects to Voutp, gate to Vbias2, bulk to nleft.
+- M7 source connects to nright, drain connects to Vout, gate to Vbias2, bulk to nright.
+- PMOS load stack on Voutp side: M3 source and bulk to VDD, drain to pleft, gate to Vbias4; M8 source and bulk to pleft, drain to Voutp, gate to Vbias3.
+- PMOS load stack on Vout side: M4 source and bulk to VDD, drain to pright, gate to Vbias4; M9 source and bulk to pright, drain to Vout, gate to Vbias3.
+- Voutp and Vout are the high-impedance differential output nodes between the NMOS cascodes and PMOS cascodes.
+
+Biasing assumptions:
+- Use VDD = 5 V.
+- Vinp = 2.5 V DC and Vinn = 2.5 V DC for balanced operating point.
+- Use threshold-aware single-supply biasing so every MOSFET conducts at `.op`.
+- Suggested explicit DC biases:
+  - Vbias1 = 1.2 V for the NMOS tail source gate, giving roughly 0.5 V overdrive.
+  - Vbias2 = 3.0 V for NMOS cascode gates, keeping NMOS input drains above saturation while allowing output headroom.
+  - Vbias3 = 2.0 V for PMOS cascode gates, biasing the PMOS cascodes on while placing output nodes near mid-supply.
+  - Vbias4 = 4.0 V for PMOS upper current-source gates, giving roughly 0.3 V PMOS overdrive from VDD.
+- MOS bulk connections should be tied to each device source as required by the task guidance.
+- Use the provided nominal MOS model sizing:
+  - NMOS: Vth = 0.7 V, kp = 100u, W = 50u, L = 1u.
+  - PMOS: Vth = -0.7 V, kp = 50u, W = 100u, L = 1u.
+
+Analyses:
+- Include `.op`.
+- The operating point should show nonzero drain current through M1, M2, M3, M4, M5, M6, M7, M8, and M9.
+- At balanced DC input, Voutp and Vout should settle to similar voltages at real high-impedance gain nodes, preferably near mid-supply with enough headroom for all stacked devices.
+
+Output constraints:
+- Final netlist filename must be `p21.cir`.
+- The netlist must contain nodes Vinp, Vinn, Vbias1, Vbias2, Vbias3, Vbias4, Voutp, and Vout exactly as named.
+- Every named input node must be driven by an explicit independent voltage source.
+- Do not use subcircuits or hidden placeholder nodes.

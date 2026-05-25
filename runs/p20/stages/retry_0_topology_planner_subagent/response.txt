@@ -1,0 +1,58 @@
+**Topology Summary**
+Use a 5 V single-supply, two-stage CMOS opamp. The first stage is an NMOS differential pair with PMOS current-mirror active load and NMOS tail current source. The first-stage single-ended high-impedance output is `Voutp`. The second stage is an NMOS common-source amplifier loaded by a PMOS active current source, producing final output `Vout`.
+
+No full netlist should be written at this planning stage.
+
+**Device/Function List**
+- `M1`: NMOS input device, gate `Vinp`, drain at PMOS mirror diode side, source/bulk at common tail node.
+- `M2`: NMOS input device, gate `Vinn`, drain at `Voutp`, source/bulk at common tail node.
+- `M3`: PMOS diode-connected active-load device, source/bulk at `VDD`, drain/gate tied to the drain of `M1`.
+- `M4`: PMOS mirror active load, source/bulk at `VDD`, gate tied to `M3` drain/gate mirror node, drain at `Voutp`.
+- `M5`: NMOS tail current source, drain at common source node of `M1/M2`, source/bulk at `0`, gate `Vbias1`.
+- `M6`: NMOS second-stage common-source gain device, gate `Voutp`, source/bulk at `0`, drain at `Vout`.
+- `M7`: PMOS second-stage active load, source/bulk at `VDD`, drain at `Vout`, gate `Vbias2`.
+- Auxiliary bias device for `Vbias3`: use a small benign MOS branch, preferably NMOS sink with gate `Vbias3`, source/bulk at `0`, and drain connected to a noncritical biased node or dummy load path so it conducts at DC without loading `Voutp` or `Vout` heavily.
+
+**Bias/Reference Strategy**
+- Define `VDD = 5 V`, ground node `0`.
+- Explicit independent DC sources must drive:
+  - `Vinp = 2.5 V`
+  - `Vinn = 2.5 V`
+  - `Vbias1 ≈ 1.1 V`
+  - `Vbias2 ≈ 3.8 V`
+  - `Vbias3 ≈ 1.1 V` if used for auxiliary NMOS, or `≈ 3.8 V` if used for auxiliary PMOS.
+- At balanced input, `M1/M2` split the `M5` tail current.
+- `M3` establishes the PMOS mirror reference current; `M4` mirrors that current into `Voutp`.
+- `M6/M7` should both conduct so `Vout` biases between `0` and `VDD`, not at a hard rail.
+
+**Signal Or Feedback Path**
+- Differential signal enters at `Vinp` and `Vinn`.
+- First-stage conversion is differential-to-single-ended:
+  - `M1` controls the diode-connected mirror side.
+  - `M2/M4` form the high-impedance gain node `Voutp`.
+- `Voutp` directly drives the gate of `M6`.
+- `M6` and `M7` form the second common-source gain stage at `Vout`.
+- No explicit global feedback path is required by the spec; this is an open-loop two-stage opamp topology.
+
+**SPICE/Netlist Constraints**
+- Final file must be named `p20.cir`.
+- Required named nodes must appear exactly: `Vinp`, `Vinn`, `Vbias1`, `Vbias2`, `Vbias3`, `Voutp`, `Vout`.
+- `Vinp`, `Vinn`, `Vbias1`, `Vbias2`, and `Vbias3` must each be driven by independent voltage sources.
+- Include `.op`.
+- Use MOS models named exactly `NMOS` and `PMOS`.
+- Required nominal devices:
+  - NMOS input/tail/second-stage devices: `W=50u L=1u`
+  - PMOS active-load devices: `W=100u L=1u`
+- Model intent:
+  - `NMOS`: `VTO=0.7`, `KP=100u`
+  - `PMOS`: `VTO=-0.7`, `KP=50u`
+- Tie bulks to sources as specified to avoid body-effect surprises and floating substrate nodes.
+
+**Failure Risks To Avoid**
+- Do not make `Voutp` the diode-connected PMOS mirror node; `Voutp` must be the drain of `M2/M4`.
+- Do not leave `Vbias3` unused or floating; it must control an electrically meaningful conducting device.
+- Do not connect the auxiliary `Vbias3` branch directly in a way that clamps `Voutp` or `Vout`.
+- Do not tie MOS bulks incorrectly; NMOS bulks should follow their specified source nodes, PMOS bulks should tie to `VDD`.
+- Do not bias `M5` off with too-low `Vbias1`, or `M7` off with too-high/incorrect PMOS gate bias.
+- Avoid floating mirror gate nodes, floating dummy drains, and output nodes with no DC path.
+- Avoid making `Vout` or `Voutp` hard rail through oversized auxiliary loads or accidental shorts.

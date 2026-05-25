@@ -1,0 +1,53 @@
+**Topology Summary**
+
+Single-stage NMOS differential common-source amplifier with PMOS current-mirror active load and NMOS tail current source. The requested ports must remain exactly `Vinp`, `Vinn`, and `Vout`. The output `Vout` is single-ended at the drain of the right input NMOS and right PMOS mirror load.
+
+**Device/Function List**
+
+- `VDD`: 5 V DC supply from `VDD` to `0`.
+- `Vinp`: 2.5 V DC input source from `Vinp` to `0`.
+- `Vinn`: 2.5 V DC input source from `Vinn` to `0`.
+- `Vbias`: 1.2 V DC tail bias source from `Vbias_tail` to `0`.
+
+- `M1`: NMOS left input transistor. Drain `Nmirror`, gate `Vinp`, source/bulk `Ntail`.
+- `M2`: NMOS right input transistor. Drain `Vout`, gate `Vinn`, source/bulk `Ntail`.
+- `M3`: PMOS diode-connected active load. Source/bulk `VDD`, gate/drain `Nmirror`.
+- `M4`: PMOS mirror load. Source/bulk `VDD`, gate `Nmirror`, drain `Vout`.
+- `M5`: NMOS tail current source. Drain `Ntail`, gate `Vbias_tail`, source/bulk `0`.
+
+**Bias/Reference Strategy**
+
+At `Vinp=Vinn=2.5V`, `M1` and `M2` should share the tail current approximately equally. `M5` is gate-biased by `Vbias_tail=1.2V`, producing a nonzero tail current while allowing `Ntail` to rise above ground.
+
+`M3` is diode-connected, so the left branch current establishes the PMOS mirror gate voltage at `Nmirror`. `M4` mirrors this current into the right/output branch. `Vout` should bias somewhere between `0` and `VDD`, not pinned to either rail.
+
+**Signal or Feedback Path**
+
+Differential input action occurs through the shared source node `Ntail`. A change in `Vinp` changes current through `M1`, which changes `Nmirror` and therefore the PMOS mirror gate drive for `M4`. This creates active-load current steering into `Vout`. `Vinn` directly controls `M2`, which sinks current from `Vout`.
+
+There is local diode feedback around `M3` because its gate and drain are tied at `Nmirror`. This stabilizes the PMOS mirror bias but is not global amplifier feedback.
+
+**SPICE/Netlist Constraints**
+
+- Final file should be `p18.cir`.
+- Include `.op`.
+- Use model names exactly `NMOS` and `PMOS`.
+- NMOS model: `VTO=0.7`, `KP=100u`.
+- PMOS model: `VTO=-0.7`, `KP=50u`.
+- Use sizes:
+  - `M1`, `M2`, `M5`: `W=50u L=1u`
+  - `M3`, `M4`: `W=100u L=1u`
+- Do not use subcircuits.
+- Do not introduce hidden bias sources.
+- `Vinp`, `Vinn`, and `Vout` must appear exactly with those names.
+- `Vinp` and `Vinn` must be explicitly driven by independent DC sources.
+
+**Failure Risks To Avoid**
+
+- Do not accidentally implement dual resistive loads; the normalized spec requires PMOS current-mirror active load `M3`/`M4`.
+- Do not leave `Vinp` or `Vinn` floating.
+- Do not swap `Vinp`/`Vinn` relative to `M1`/`M2`.
+- Do not place `Vout` at the diode-connected node; `Vout` must be the drain of `M2` and `M4`.
+- Do not forget PMOS bulks tied to `VDD` and NMOS bulks tied to their specified source/reference nodes.
+- Do not tie `M5` bulk to `Ntail`; it should be tied to `0`.
+- Avoid bias choices or device orientation errors that rail-clamp `Vout` or produce zero drain current in any MOSFET during `.op`.

@@ -1,0 +1,9 @@
+{
+  "status": "needs_repair",
+  "syntax_issues": [],
+  "topology_issues": [
+    "overly_strong_output_shunt_for_high_gain_stage"
+  ],
+  "repair_focus": "General op-amp repair focus: keep every MOSFET conducting at DC, preserve requested bias nodes as real gate-level bias controls, avoid internal gigaohm shunts that collapse high-impedance nodes, and make the intended differential gain path dominate the common-mode response. For multi-stage structures, ensure the first stage creates a real gain node that drives the second-stage transistor gate and avoid giant resistive output shunts.",
+  "recommended_next_agent": "validator_subagent"
+}

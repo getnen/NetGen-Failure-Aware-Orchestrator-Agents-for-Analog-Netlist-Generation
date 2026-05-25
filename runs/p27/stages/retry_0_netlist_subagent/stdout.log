@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019defbe-73fa-7292-a266-f2084e816c1e"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* single-supply unity-gain differential subtractor Vout = Vin2 - Vin1\nVDD VDD 0 DC 5\nV1 Vin1 0 DC 1\nV2 Vin2 0 DC 3\n\nR1 Vin1 Ninv 10k\nR2 Vout Ninv 10k\nR3 Vin2 Nnon 10k\nR4 Nnon 0 10k\n\nI1 Ntail 0 DC 200u\nM1 Nd1 Nnon Ntail 0 NMOSL1 W=200u L=1u\nM2 Vout Ninv Ntail 0 NMOSL1 W=200u L=1u\nM3 Nd1 Nd1 VDD VDD PMOSL1 W=400u L=1u\nM4 Vout Nd1 VDD VDD PMOSL1 W=400u L=1u\n\n.model NMOSL1 NMOS LEVEL=1 VTO=0.7 KP=200u LAMBDA=0.02\n.model PMOSL1 PMOS LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02\n\n.op\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":24609,"cached_input_tokens":21376,"output_tokens":773,"reasoning_output_tokens":516}}

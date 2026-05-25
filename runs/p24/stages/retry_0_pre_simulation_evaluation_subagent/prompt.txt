@@ -1,0 +1,3 @@
+Evaluate syntax and topology before invoking ngspice/checker simulation.
+Type: Integrator
+Task: An Opamp integrator with resistor R1 and capacitor Cf

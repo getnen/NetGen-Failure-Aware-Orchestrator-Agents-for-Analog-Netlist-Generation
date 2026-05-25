@@ -1,0 +1,11 @@
+{
+  "next_agent": "validator_subagent",
+  "reason": "Pre-simulation evaluation found issues that should be repaired before ngspice/checker execution.",
+  "retry_index": 2,
+  "context": {
+    "syntax_issues": [
+      "contains_disabled_spice_elements"
+    ],
+    "topology_issues": []
+  }
+}

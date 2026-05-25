@@ -1,0 +1,1 @@
+{"type": "mock.stage", "stage": "retry_1_orchestrator_subagent", "notes": "next_agent=validator_subagent"}

@@ -1,0 +1,27 @@
+* 5V single-supply transistor RC phase-shift oscillator
+VDD VDD 0 DC 5
+VREF Vref 0 DC 2.5
+
+RBIAS1 VDD Vinp 330k
+RBIAS2 Vinp 0 100k
+CSTART Vinp 0 1p
+
+Q1 Vout Vinp emit NPN
+RC VDD Vout 4.7k
+RE emit 0 680
+CE emit 0 100u
+
+C1 Vout rc1 10n
+R1 rc1 Vref 6.8k
+C2 rc1 rc2 10n
+R2 rc2 Vref 6.8k
+C3 rc2 Vinn 10n
+R3 Vinn Vref 6.8k
+CIN Vinn Vinp 100n
+RIN Vinp Vref 1Meg
+
+.model NPN NPN IS=1e-15 BF=200 VAF=100 CJE=2p CJC=1p TF=0.3n
+
+.ic V(Vinp)=1.18 V(Vinn)=2.52 V(rc1)=2.48 V(rc2)=2.51 V(Vout)=2.7 V(emit)=0.52
+.tran 1u 20m uic
+.end

@@ -1,0 +1,114 @@
+You are the SPICE writing subagent.
+Generate exactly one valid ngspice netlist from the spec below.
+Return ONLY plain netlist text: no markdown, no code fences, no explanation.
+Use primitive devices only: R, C, L, V, I, D, Q, M.
+First line must be a title comment starting with *.
+Last line must be .end
+Output filename: p22.cir
+
+=== NETLIST GUIDANCE ===
+Emit a complete runnable ngspice netlist that faithfully implements the planned topology. Include exactly the requested nodes, at least one relevant analysis directive, realistic source definitions for the task, and a single final .end. Every voltage-like input node such as Vin, Vbias, Vref, Vinp, Vinn, Vctrl, Vlop, or Vrfp must have an explicit V source unless the task specifically defines it as an output or passive internal node. Every current-like input node such as Iref must have an explicit I source or source branch. Do not omit device models, supply sources, input sources, or bias sources required for the circuit to operate. Do not add explanatory prose.
+
+For complex tasks, make the verification path obvious in the netlist: choose source waveforms, component values, and analyses that expose the expected behavior. Passive filters should have sensible corner frequencies and AC sources. Oscillator and waveform-shaping circuits should include transient analysis and any minimal initialization needed for startup. Comparator and hysteresis-style circuits should include sweep or transient conditions that allow the output transition to be observed.
+
+For oscillator tasks, expose internal op-amp input nodes named exactly Vinp and Vinn when using a direct transistor-level implementation, because the checker initializes those nodes for startup. Include a single-supply bias/reference near mid-supply, an amplifier stage with sufficient loop gain, and an RC feedback network that closes the intended oscillation loop around Vout. Avoid hard digital-style CMOS inverter output stages or strong clamp devices around the oscillation nodes unless they are intentionally gentle amplitude-control elements, because they often kill startup or create distorted multi-mode oscillation.
+
+=== TOPOLOGY PLAN ===
+**Topology summary**
+
+Use a single-supply behavioral op-amp RC phase-shift oscillator. The output port is exactly `Vout`. The circuit should run from `VDD=5 V` and bias all signal nodes around a bypassed mid-supply reference `Vref ~= 2.5 V`. The gain stage is an inverting high-gain block with `Vinp` tied to `Vref`, `Vinn` as the summing/inverting node, and output clipped or limited to the 0 V to 5 V supply range.
+
+**Device/function list**
+
+- `VDD`: 5 V independent DC supply from `VDD` to ground.
+- `Rtop`, `Rbot`: equal divider resistors from `VDD` to `Vref` to ground.
+- `Cref`: bypass capacitor from `Vref` to ground.
+- Behavioral op-amp/gain source:
+  - positive input node: `Vinp`
+  - negative input node: `Vinn`
+  - output node: `Vout`
+  - finite high gain with output limiting between 0 V and 5 V.
+- Three RC phase-shift sections:
+  - `C1` from `Vout` to `n1`, `R1` from `n1` to `Vref`
+  - `C2` from `n1` to `n2`, `R2` from `n2` to `Vref`
+  - `C3` from `n2` to `n3`, `R3` from `n3` to `Vref`
+- Inverting gain network:
+  - `Rin` from `n3` to `Vinn`
+  - `Rf` from `Vout` to `Vinn`
+  - choose `Rf/Rin` above 29, preferably about 35 to 45, e.g. `Rin=10k`, `Rf=390k`.
+
+**Bias/reference strategy**
+
+`Vref` is the signal common-mode point. Use equal divider resistors, for example `100k/100k`, and a bypass capacitor such as `1uF` or larger. Tie `Vinp` directly to `Vref`. Ensure `Vinn`, `n1`, `n2`, and `n3` all have DC paths to `Vref`, so the operating point is well-defined near 2.5 V.
+
+Add startup imbalance with `.ic`, for example:
+
+```spice
+.ic V(n1)=2.55 V(n2)=2.45 V(n3)=2.52 V(Vout)=2.5
+```
+
+**Signal or feedback path**
+
+`Vout` feeds the three cascaded RC high-pass sections. The ladder output at `n3` drives the inverting summing node through `Rin`. The op-amp inverting stage adds another 180 degrees phase inversion, while the RC ladder contributes approximately 180 degrees near the selected frequency. With equal `R=10k` and `C=10nF`, oscillation should land in the low-kHz range and be visible during `.tran 1u 5m`.
+
+`Rf` from `Vout` to `Vinn` sets the inverting gain with `Rin`. Use enough excess gain for startup, but rely on output limiting to prevent runaway.
+
+**SPICE/netlist constraints**
+
+- Preserve output node name exactly: `Vout`.
+- Include exactly:
+  ```spice
+  .tran 1u 5m
+  ```
+- Save or expose `V(Vout)`.
+- Do not add external input nodes.
+- If using a behavioral source, implement finite output limiting, e.g. a `LIMIT()` or equivalent expression around a high-gain differential term centered on `Vref`.
+- Avoid ideal unlimited gain sources without clipping.
+- Keep all RC ladder shunt resistors referenced to `Vref`, not ground, for single-supply operation.
+
+**Failure risks to avoid**
+
+- Too little loop gain: `Rf/Rin <= 29` may repeat the failed tiny 20 mV ripple behavior.
+- No startup perturbation: a perfectly symmetric oscillator can remain stuck at the DC operating point.
+- Wrong bias reference: grounding the RC resistors or input network can force nodes away from mid-supply and kill oscillation.
+- Missing output limiting: unlimited behavioral gain may cause numerical runaway or unrealistic voltages.
+- Loading `n3` too heavily: the summing network should not collapse the phase-shift ladder output.
+- Naming mistakes: the evaluator expects `Vout`, so do not rename it to `out`, `vout`, or an internal op-amp node.
+
+=== NORMALIZED SPEC ===
+final_filename: p22.cir
+
+Objective: Create a 5 V single-supply RC phase-shift oscillator whose output node `Vout` develops a sustained visible periodic waveform during `.tran 1u 5m`. There are no external input nodes. `Vout` must appear as the oscillator output node and must not remain near DC; target late-time oscillation amplitude should be clearly larger than the failed 20 mV result.
+
+Topology: Use an op-amp-style high-gain inverting stage biased around a mid-supply reference, with a three-section RC phase-shift feedback ladder from `Vout` back to the inverting input. The RC ladder supplies approximately 180 degrees phase shift at the oscillation frequency, and the inverting gain stage supplies the additional 180 degrees. Set closed-loop/inverting gain magnitude above the Barkhausen minimum of 29, preferably around 35 to 45, so startup is reliable.
+
+Required devices and interconnectivity:
+- Independent DC supply `VDD` = 5 V from node `VDD` to ground.
+- Mid-supply reference node, e.g. `Vref`, generated by a resistor divider from `VDD` to ground and bypassed with a capacitor. `Vref` should be near 2.5 V.
+- Op-amp/gain-stage internal input nodes should include `Vinp` and `Vinn` if using a behavioral op-amp. Tie `Vinp` to `Vref`. Drive `Vinn` from the RC feedback network plus bias/gain resistors.
+- Output of the gain stage is exactly `Vout`.
+- Three cascaded RC high-pass phase-shift sections from `Vout` to `Vinn`, for example:
+  - `Vout` through `C1` to node `n1`, with `R1` from `n1` to `Vref`
+  - `n1` through `C2` to node `n2`, with `R2` from `n2` to `Vref`
+  - `n2` through `C3` to feedback node `n3`, with `R3` from `n3` to `Vref`
+  - connect `n3` to `Vinn` through the inverting input/gain network as needed
+- Choose equal RC sections such as `R1=R2=R3=10k` and `C1=C2=C3=10nF`, giving oscillation in the low-kHz range, suitable for a 5 ms transient.
+- Add an inverting gain path around the op-amp referenced to `Vref`: use input resistor from `n3` to `Vinn` and feedback resistor from `Vout` to `Vinn`, with ratio `Rf/Rin > 29`, e.g. `Rin=10k`, `Rf=390k`.
+- Include output limiting or finite-supply clipping so `Vout` remains within 0 V to 5 V and settles into a sustained nonlinear oscillation rather than numerical runaway. A behavioral source with limiting around the high-gain differential output is acceptable if no subcircuit is used.
+
+Biasing assumptions:
+- Single-supply operation requires all small-signal nodes to be biased around `Vref=2.5 V`.
+- The non-inverting input `Vinp` should be fixed at `Vref`.
+- The inverting input `Vinn` should sit near `Vref` at DC.
+- If MOS transistors are used for the gain stage, connect NMOS bulk to source and PMOS bulk to source, use the provided `NMOS` and `PMOS` models, and bias gates/sources so devices exceed threshold. A behavioral op-amp/gain block is preferred for robust oscillator evaluation.
+- Add startup asymmetry with `.ic` or initial capacitor/node conditions, for example `V(n1)=2.55`, `V(n2)=2.45`, `V(n3)=2.52`, or a small `Vinp/Vinn` mismatch. This is required because a perfectly symmetric oscillator can remain at the DC operating point.
+
+Required analysis:
+- Include exactly the requested transient analysis: `.tran 1u 5m`
+- Save or expose `V(Vout)` as the primary waveform.
+
+Expected behavior:
+- At startup, the small initial mismatch around the op-amp input is amplified.
+- The RC ladder selects the oscillation frequency and returns a phase-shifted signal to the inverting input.
+- `Vout` should grow from near `Vref`, then settle into a sustained periodic waveform centered roughly around mid-supply.
+- The latter half of the 5 ms transient should show clear nonzero standard deviation and visible oscillation amplitude at `Vout`, preferably hundreds of millivolts to several volts peak-to-peak, not a flat 20 mV ripple.

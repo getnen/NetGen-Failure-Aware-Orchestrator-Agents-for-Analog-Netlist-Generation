@@ -1,0 +1,4 @@
+{"type": "thread.started", "thread_id": "019e6001-5625-7a81-8274-630837f9bc36"}
+{"type": "turn.started"}
+{"type": "item.completed", "item": {"id": "item_0", "type": "agent_message", "text": "* Twin-T passive notch filter\nV1 Vin 0 AC 1\nR1 Vin nR 1k\nR2 nR Vout 1k\nC1 nR 0 2n\nC2 Vin nC 1n\nC3 nC Vout 1n\nR3 nC 0 500\n.ac dec 20 1 1e9\n.end"}}
+{"type": "turn.completed", "usage": {"input_tokens": 14837, "cached_input_tokens": 0, "output_tokens": 377, "reasoning_output_tokens": 286}}

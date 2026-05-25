@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019dfc7c-3ea9-78c3-a66f-21e70d29ac56"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"* 5V single-supply MOS RC phase-shift oscillator\nVDD VDD 0 DC 5\nVREFSRC VREF 0 DC 2.5\nRREF1 VDD VREF 100k\nRREF2 VREF 0 100k\nCREF VREF 0 100n\n\nRD VDD Vout 3.3k\nM1 Vout Vinp ns 0 NMOS W=2500u L=1u\nRS ns 0 1.5k\nCS ns 0 10u\n\nRDCOUT Vout VREF 1Meg\n\nC1 Vout n1 1n\nR1 n1 VREF 6.8k\nC2 n1 n2 1n\nR2 n2 VREF 6.8k\nC3 n2 Vinp 1n\nR3 Vinp VREF 6.8k\nRINP Vinp VREF 1Meg\nRVINN Vinn VREF 1k\n\n.ic V(n1)=2.65 V(n2)=2.35 V(Vinp)=2.60 V(Vinn)=2.50 V(Vout)=2.2 V(ns)=1.4\n\n.model NMOS NMOS LEVEL=1 VTO=0.7 KP=250u LAMBDA=0.02 PHI=0.6 GAMMA=0.4\n.model PMOS PMOS LEVEL=1 VTO=-0.7 KP=100u LAMBDA=0.02 PHI=0.6 GAMMA=0.4\n\n.tran 1u 5m\n.end"}}
+{"type":"turn.completed","usage":{"input_tokens":14452,"cached_input_tokens":11648,"output_tokens":869,"reasoning_output_tokens":516}}

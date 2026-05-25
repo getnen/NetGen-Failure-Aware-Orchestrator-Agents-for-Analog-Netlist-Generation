@@ -1,0 +1,2 @@
+{"ts_utc": "16:37:42.964169+00:00", "type": "run.started", "payload": {"run_id": "p12_a00", "backend": "codex", "task_id": "12", "task_type": "BandPass", "task_level": "Easy", "output_cir": "p12.cir", "has_prev_errors": false, "max_retries": 3}}
+{"ts_utc": "16:38:25.656579+00:00", "type": "run.completed", "payload": {"status": "success", "output_cir": "<REDACTED>", "final_issues": [], "retries_used": 1}}

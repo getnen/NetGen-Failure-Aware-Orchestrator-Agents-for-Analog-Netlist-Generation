@@ -1,0 +1,26 @@
+* Primitive-device non-inverting CMOS Schmitt trigger with explicit VTH summing node
+VDD VDD 0 5
+VREF VREF 0 2.5
+Vin Vin 0 0
+
+Rin Vin VTH 100k
+Rfb Vout VTH 330k
+Rref VREF VTH 120k
+
+Ibias VDD NBIAS 20u
+MNB NBIAS NBIAS 0 0 NMOS L=1u W=20u
+MTAIL NTAIL NBIAS 0 0 NMOS L=1u W=20u
+
+MINP N1 VTH NTAIL 0 NMOS L=1u W=40u
+MREF Vout VREF NTAIL 0 NMOS L=1u W=40u
+
+MP1 N1 N1 VDD VDD PMOS L=1u W=80u
+MP2 Vout N1 VDD VDD PMOS L=1u W=80u
+
+Cload Vout 0 20f
+
+.model NMOS NMOS (LEVEL=1 VTO=0.75 KP=220u LAMBDA=0.03 GAMMA=0.45 PHI=0.7)
+.model PMOS PMOS (LEVEL=1 VTO=-0.75 KP=90u LAMBDA=0.03 GAMMA=0.45 PHI=0.7)
+
+.op
+.end
